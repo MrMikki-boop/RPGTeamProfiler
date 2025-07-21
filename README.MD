@@ -6,7 +6,8 @@
 построить крутые радарные диаграммы и экспортировать их в PNG или архив. Бросай d20 и погнали! 🎉
 
 ![RPG Team Profiler Screenshot](img/screenshot.png)  
-<img alt="RPG Team Profiler Character Profile" height="632" src="img/Character_PRGTeamProfile.png" width="314"/> <img alt="RPG Team Profiler All Profiles" height="352" src="img/PRGTeamAllProfile.png" width="400"/>  
+<img alt="RPG Team Profiler Character Profile" height="632" width="314" src="img/Character_PRGTeamProfile.png" style="vertical-align: top;"/>
+<img alt="RPG Team Profiler All Profiles" height="352" width="400" src="img/PRGTeamAllProfile.png" style="vertical-align: top;"/> 
 *(Скриншот интерфейса)*
 
 ---
