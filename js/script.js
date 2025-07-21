@@ -574,7 +574,7 @@ function exportCharacterChart(characterId) {
 
   html2canvas(card, {
     backgroundColor: null,
-    scale: 4,
+    scale: 1,
     useCORS: true
   }).then(canvas => {
     statEditors.forEach((editor, index) => {
@@ -613,7 +613,7 @@ function exportComparison() {
 
   html2canvas(comparisonSection, {
     backgroundColor: null,
-    scale: 4,
+    scale: 1,
     useCORS: true
   }).then(canvas => {
     comparisonSection.style.cssText = originalStyle;
@@ -665,7 +665,7 @@ function exportAllCharts() {
 
       const promise = html2canvas(card, {
         backgroundColor: null,
-        scale: 4,
+        scale: 1,
         useCORS: true
       }).then(canvas => {
         statEditors.forEach((editor, index) => {
@@ -701,7 +701,7 @@ function exportAllCharts() {
 
     const promise = html2canvas(comparisonSection, {
       backgroundColor: null,
-      scale: 4,
+      scale: 1,
       useCORS: true
     }).then(canvas => {
       comparisonSection.style.cssText = originalStyle;
