@@ -619,7 +619,7 @@ function exportComparison() {
     comparisonSection.style.cssText = originalStyle;
 
     const link = document.createElement('a');
-    link.download = 'сравнительный_анализ_команды.png';
+    link.download = 'PRGTeamAllProfile.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
   });
@@ -706,7 +706,7 @@ function exportAllCharts() {
     }).then(canvas => {
       comparisonSection.style.cssText = originalStyle;
       const dataUrl = canvas.toDataURL('image/png');
-      zip.file('сравнительный_анализ_команды.png', dataUrl.split(',')[1], { base64: true });
+      zip.file('PRGTeamAllProfile.png', dataUrl.split(',')[1], { base64: true });
     });
     promises.push(promise);
   }
