@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG Team Profiler</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+</head>
+<body>
+<div class="header">
+    <h1>⚔️ Интерактивные профили НРИ-команды ⚔️</h1>
+    <p>Настраивайте характеристики в реальном времени</p>
+</div>
+
+<div class="controls">
+    <button class="control-btn" onclick="addPlayer()">➕ Добавить игрока</button>
+    <button class="control-btn" onclick="addDM()">🎭 Добавить ДМ</button>
+    <button class="control-btn" onclick="resetAll()">🔄 Сбросить все</button>
+    <div class="export-dropdown">
+        <button class="control-btn export-btn" onclick="toggleExportMenu()">💾 Экспорт PNG</button>
+        <div class="export-menu" id="export-menu">
+            <div class="export-option section-title">Индивидуальные диаграммы</div>
+            <div id="individual-exports"></div>
+            <div class="export-option section-title">Общие диаграммы</div>
+            <div class="export-option" onclick="exportComparison()">📊 Сравнительный анализ команды</div>
+            <div class="export-option" onclick="exportAllCharts()">📦 Все диаграммы (архив)</div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-labels-editor">
+    <h3>Редактировать названия характеристик</h3>
+    <div class="labels-grid" id="labels-editor"></div>
+</div>
+
+<div class="charts-grid" id="charts-container"></div>
+
+<div class="comparison-section" id="comparison-section">
+    <h2 class="comparison-title">📊 Сравнительный анализ команды</h2>
+    <div class="chart-canvas">
+        <div class="radar-chart" id="comparison-chart"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.2.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
