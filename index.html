@@ -21,6 +21,12 @@
     <button class="control-btn" onclick="addPlayer()">➕ Добавить игрока</button>
     <button class="control-btn" onclick="addDM()">🎭 Добавить ДМ</button>
     <button class="control-btn" onclick="resetAll()">🔄 Сбросить все</button>
+    <div class="scoreJonah score-system-select">
+        <select id="score-system" onchange="changeScoreSystem(this.value)">
+            <option value="0-10">Система баллов: 0–10</option>
+            <option value="-5-5">Система баллов: -5–5</option>
+        </select>
+    </div>
     <div class="export-dropdown">
         <button class="control-btn export-btn" onclick="toggleExportMenu()">💾 Экспорт PNG</button>
         <div class="export-menu" id="export-menu">

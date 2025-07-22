@@ -62,6 +62,47 @@ body {
     background: linear-gradient(45deg, #ff6b6b, #ff8a8a);
 }
 
+.score-system-select {
+    position: relative;
+    display: inline-block;
+}
+
+.score-system-select select {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5H7z"/></svg>');
+    background-position: right 10px center;
+    background-repeat: no-repeat;
+    padding-right: 30px;
+}
+
+.score-system-select select:focus {
+    outline: none;
+    border-color: #4ecdc4;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.score-system-select select:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+}
+
+.score-system-select option {
+    background: #1a1a2e;
+    color: white;
+}
+
 .export-dropdown {
     position: relative;
     display: inline-block;

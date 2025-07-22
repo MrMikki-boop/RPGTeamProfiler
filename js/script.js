@@ -5,7 +5,7 @@ let characters = [
         role: 'player',
         stats: [8, 2, 6, 7, 6],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(163,138,255,0.3)', border: '#6228d6'}
+        color: { background: 'rgba(163,138,255,0.3)', border: '#6228d6' }
     },
     {
         id: 2,
@@ -13,7 +13,7 @@ let characters = [
         role: 'player',
         stats: [8, 3, 7, 8, 8],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'}
+        color: { background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b' }
     },
     {
         id: 3,
@@ -21,7 +21,7 @@ let characters = [
         role: 'player',
         stats: [6, 7, 4, 7, 2],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'}
+        color: { background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4' }
     },
     {
         id: 4,
@@ -29,7 +29,7 @@ let characters = [
         role: 'player',
         stats: [2, 2, 8, 2, 7],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'}
+        color: { background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1' }
     },
     {
         id: 5,
@@ -37,7 +37,7 @@ let characters = [
         role: 'dm',
         stats: [8, 8, 3, 9, 3],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
+        color: { background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff' }
     }
 ];
 
@@ -52,18 +52,19 @@ let globalStatLabels = [
 let globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
 
 const playerColors = [
-    {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'},
-    {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'},
-    {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'},
-    {background: 'rgba(163,138,255,0.3)', border: '#6228d6'},
-    {background: 'rgba(255, 193, 7, 0.3)', border: '#ffc107'},
-    {background: 'rgba(233, 30, 99, 0.3)', border: '#e91e63'}
+    { background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b' },
+    { background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4' },
+    { background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1' },
+    { background: 'rgba(163,138,255,0.3)', border: '#6228d6' },
+    { background: 'rgba(255, 193, 7, 0.3)', border: '#ffc107' },
+    { background: 'rgba(233, 30, 99, 0.3)', border: '#e91e63' }
 ];
 
 let nextId = 6;
 let chartInstances = {};
 let comparisonChart = null;
-let visibleCharacters = characters.map(c => c.id); // Все персонажи видны по умолчанию
+let visibleCharacters = characters.map(c => c.id);
+let scoreSystem = '0-10';
 
 function wrapText(text, maxLength) {
     const words = text.split(' ');
@@ -125,6 +126,27 @@ function updateCharacterStatLabel(characterId, index, value) {
     }
 }
 
+function changeScoreSystem(newSystem) {
+    if (newSystem === scoreSystem) return;
+
+    characters.forEach(character => {
+        character.stats = character.stats.map(stat => {
+            if (scoreSystem === '0-10' && newSystem === '-5-5') {
+                // 0–10 → -5–5: масштабируем [0, 10] в [-5, 5]
+                return (stat - 5) * 1;
+            } else if (scoreSystem === '-5-5' && newSystem === '0-10') {
+                // -5–5 → 0–10: масштабируем [-5, 5] в [0, 10]
+                return (stat + 5) * 1;
+            }
+            return stat;
+        });
+    });
+
+    scoreSystem = newSystem;
+    updateAllCards();
+    updateComparisonChart();
+}
+
 function updateAllCards() {
     const container = document.getElementById('charts-container');
     container.innerHTML = '';
@@ -143,15 +165,32 @@ function createSVGRadarChart(container, character, isComparison = false) {
 
     container.innerHTML = '';
 
-    for (let i = 1; i <= 5; i++) {
+    const maxValue = scoreSystem === '0-10' ? 10 : 5;
+    const minValue = scoreSystem === '0-10' ? 0 : -5;
+    const step = scoreSystem === '0-10' ? 2 : 2;
+    const ticks = (maxValue - minValue) / step;
+
+    for (let i = 0; i <= ticks; i++) {
+        const radius = (maxRadius * i) / ticks;
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.setAttribute('cx', center);
         circle.setAttribute('cy', center);
-        circle.setAttribute('r', (maxRadius * i) / 5);
+        circle.setAttribute('r', radius);
         circle.setAttribute('fill', 'none');
         circle.setAttribute('stroke', 'rgba(255, 255, 255, 0.1)');
         circle.setAttribute('stroke-width', '1');
         svg.appendChild(circle);
+
+        const labelValue = minValue + (i * step);
+        const labelY = center - radius - 10;
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', center);
+        text.setAttribute('y', labelY);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', '#ffffff');
+        text.setAttribute('font-size', '10px');
+        text.textContent = labelValue;
+        svg.appendChild(text);
     }
 
     const angleStep = (2 * Math.PI) / globalStatShortLabels.length;
@@ -207,11 +246,14 @@ function createSVGRadarChart(container, character, isComparison = false) {
 }
 
 function createDataPolygon(svg, character, center, maxRadius, angleStep) {
+    const maxValue = scoreSystem === '0-10' ? 10 : 5;
+    const minValue = scoreSystem === '0-10' ? 0 : -5;
     const points = [];
     for (let i = 0; i < character.stats.length; i++) {
         const angle = -Math.PI / 2 + i * angleStep;
         const value = character.stats[i];
-        const radius = (maxRadius * value) / 10;
+        const normalizedValue = (value - minValue) / (maxValue - minValue);
+        const radius = maxRadius * normalizedValue;
         const x = center + radius * Math.cos(angle);
         const y = center + radius * Math.sin(angle);
         points.push(`${x},${y}`);
@@ -227,7 +269,8 @@ function createDataPolygon(svg, character, center, maxRadius, angleStep) {
     for (let i = 0; i < character.stats.length; i++) {
         const angle = -Math.PI / 2 + i * angleStep;
         const value = character.stats[i];
-        const radius = (maxRadius * value) / 10;
+        const normalizedValue = (value - minValue) / (maxValue - minValue);
+        const radius = maxRadius * normalizedValue;
         const x = center + radius * Math.cos(angle);
         const y = center + radius * Math.sin(angle);
 
@@ -248,6 +291,9 @@ function createCharacterCard(character) {
     cardDiv.className = `chart-card ${character.role}-card`;
     cardDiv.id = `card-${character.id}`;
 
+    const minValue = scoreSystem === '0-10' ? 0 : -5;
+    const maxValue = scoreSystem === '0-10' ? 10 : 5;
+
     cardDiv.innerHTML = `
         <button class="delete-btn" onclick="deleteCharacter(${character.id})">×</button>
         <div class="chart-header">
@@ -265,9 +311,9 @@ function createCharacterCard(character) {
                 <div class="stat-editor">
                     <input type="text" class="stat-name-input" value="${character.statsLabels[i]}"
                            onchange="updateCharacterStatLabel(${character.id}, ${i}, this.value)">
-                    <input type="number" class="stat-input" min="0" max="10" value="${stat}"
+                    <input type="number" class="stat-input" min="${minValue}" max="${maxValue}" value="${stat}"
                            onchange="updateStat(${character.id}, ${i}, parseInt(this.value))">
-                    <input type="range" class="stat-slider" min="0" max="10" value="${stat}"
+                    <input type="range" class="stat-slider" min="${minValue}" max="${maxValue}" value="${stat}"
                            oninput="updateStat(${character.id}, ${i}, parseInt(this.value)); this.previousElementSibling.value = this.value">
                 </div>
             `).join('')}
@@ -283,6 +329,9 @@ function createCharacterCard(character) {
 function updateChart(character) {
     const chartContainer = document.getElementById(`chart-${character.id}`);
     if (!chartContainer) return;
+
+    const maxValue = scoreSystem === '0-10' ? 10 : 5;
+    const minValue = scoreSystem === '0-10' ? 0 : -5;
 
     if (typeof Chart !== 'undefined') {
         if (chartInstances[character.id]) {
@@ -317,15 +366,16 @@ function updateChart(character) {
                 maintainAspectRatio: true,
                 scales: {
                     r: {
-                        beginAtZero: true,
-                        max: 10,
+                        beginAtZero: scoreSystem === '0-10',
+                        min: minValue,
+                        max: maxValue,
                         ticks: {
-                            stepSize: 2,
+                            stepSize: scoreSystem === '0-10' ? 2 : 2,
                             backdropColor: 'rgba(0, 0, 0, 0)',
                             color: 'rgba(255, 255, 255, 0.7)'
                         },
                         pointLabels: {
-                            font: {size: 12, weight: 'bold'},
+                            font: { size: 12, weight: 'bold' },
                             color: '#ffffff'
                         },
                         grid: {
@@ -337,7 +387,7 @@ function updateChart(character) {
                     }
                 },
                 plugins: {
-                    legend: {display: false}
+                    legend: { display: false }
                 }
             }
         });
@@ -377,6 +427,9 @@ function updateComparisonChart() {
     const chartContainer = document.getElementById('comparison-chart');
     if (!chartContainer) return;
 
+    const maxValue = scoreSystem === '0-10' ? 10 : 5;
+    const minValue = scoreSystem === '0-10' ? 0 : -5;
+
     if (typeof Chart !== 'undefined') {
         if (comparisonChart) {
             comparisonChart.destroy();
@@ -411,15 +464,16 @@ function updateComparisonChart() {
                 maintainAspectRatio: true,
                 scales: {
                     r: {
-                        beginAtZero: true,
-                        max: 10,
+                        beginAtZero: scoreSystem === '0-10',
+                        min: minValue,
+                        max: maxValue,
                         ticks: {
-                            stepSize: 2,
+                            stepSize: scoreSystem === '0-10' ? 2 : 2,
                             backdropColor: 'rgba(0, 0, 0, 0)',
                             color: 'rgba(255, 255, 255, 0.7)'
                         },
                         pointLabels: {
-                            font: {size: 12, weight: 'bold'},
+                            font: { size: 12, weight: 'bold' },
                             color: '#ffffff'
                         },
                         grid: {
@@ -435,7 +489,7 @@ function updateComparisonChart() {
                         position: 'bottom',
                         labels: {
                             color: '#ffffff',
-                            font: {size: 12},
+                            font: { size: 12 },
                             padding: 15
                         }
                     }
@@ -448,7 +502,9 @@ function updateComparisonChart() {
 }
 
 function updateStat(characterId, statIndex, value) {
-    value = Math.max(0, Math.min(10, value));
+    const maxValue = scoreSystem === '0-10' ? 10 : 5;
+    const minValue = scoreSystem === '0-10' ? 0 : -5;
+    value = Math.max(minValue, Math.min(maxValue, value));
     const character = characters.find(c => c.id === characterId);
     if (character) {
         character.stats[statIndex] = value;
@@ -477,31 +533,33 @@ function updateCharacterName(characterId, name) {
 
 function addPlayer() {
     const colorIndex = characters.filter(c => c.role === 'player').length % playerColors.length;
+    const defaultStats = scoreSystem === '0-10' ? [5, 5, 5, 5, 5] : [0, 0, 0, 0, 0];
     const newPlayer = {
         id: nextId++,
         name: 'Новый игрок',
         role: 'player',
-        stats: [5, 5, 5, 5, 5],
+        stats: defaultStats,
         statsLabels: [...globalStatShortLabels],
         color: playerColors[colorIndex]
     };
     characters.push(newPlayer);
-    visibleCharacters.push(newPlayer.id); // Новый игрок видим по умолчанию
+    visibleCharacters.push(newPlayer.id);
     createCharacterCard(newPlayer);
     updateComparisonChart();
 }
 
 function addDM() {
+    const defaultStats = scoreSystem === '0-10' ? [5, 5, 5, 5, 5] : [0, 0, 0, 0, 0];
     const newDM = {
         id: nextId++,
         name: 'Новый ДМ',
         role: 'dm',
-        stats: [5, 5, 5, 5, 5],
+        stats: defaultStats,
         statsLabels: [...globalStatShortLabels],
-        color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
+        color: { background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff' }
     };
     characters.push(newDM);
-    visibleCharacters.push(newDM.id); // Новый ДМ видим по умолчанию
+    visibleCharacters.push(newDM.id);
     createCharacterCard(newDM);
     updateComparisonChart();
 }
@@ -536,6 +594,8 @@ function resetAll() {
             'Тактика/Подготовка'
         ];
         globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
+        scoreSystem = '0-10';
+        document.getElementById('score-system').value = '0-10';
         document.getElementById('charts-container').innerHTML = '';
         document.getElementById('character-toggles').innerHTML = '';
         Object.values(chartInstances).forEach(chart => chart.destroy());
@@ -605,7 +665,7 @@ function exportCharacterChart(characterId) {
         numberDiv.style.justifyContent = 'center';
         numberDiv.textContent = numberValue;
 
-        originalInputs.push({nameInput, numberInput, sliderInput});
+        originalInputs.push({ nameInput, numberInput, sliderInput });
 
         nameInput.parentNode.replaceChild(nameDiv, nameInput);
         numberInput.parentNode.replaceChild(numberDiv, numberInput);
@@ -618,7 +678,7 @@ function exportCharacterChart(characterId) {
         useCORS: true
     }).then(canvas => {
         statEditors.forEach((editor, index) => {
-            const {nameInput, numberInput, sliderInput} = originalInputs[index];
+            const { nameInput, numberInput, sliderInput } = originalInputs[index];
             const nameDiv = editor.querySelector('.stat-name-input');
             const numberDiv = editor.querySelector('.stat-input');
 
@@ -628,7 +688,7 @@ function exportCharacterChart(characterId) {
         });
 
         const link = document.createElement('a');
-        link.download = `${character.name}_PRGTeamProfile.png`;
+        link.download = `${character.name}_PRGTeamProfile_${scoreSystem}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     });
@@ -651,7 +711,6 @@ function exportComparison() {
         tempCanvas = chartContainer.querySelector('canvas');
     }
 
-    // Скрыть чекбоксы на время экспорта
     const toggleContainer = document.getElementById('character-toggles');
     const originalToggleDisplay = toggleContainer.style.display;
     toggleContainer.style.display = 'none';
@@ -665,7 +724,7 @@ function exportComparison() {
         toggleContainer.style.display = originalToggleDisplay;
 
         const link = document.createElement('a');
-        link.download = 'PRGTeamAllProfile.png';
+        link.download = `PRGTeamAllProfile_${scoreSystem}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     });
@@ -702,7 +761,7 @@ function exportAllCharts() {
                 numberDiv.style.justifyContent = 'center';
                 numberDiv.textContent = numberValue;
 
-                originalInputs.push({nameInput, numberInput, sliderInput});
+                originalInputs.push({ nameInput, numberInput, sliderInput });
 
                 nameInput.parentNode.replaceChild(nameDiv, nameInput);
                 numberInput.parentNode.replaceChild(numberDiv, numberInput);
@@ -715,7 +774,7 @@ function exportAllCharts() {
                 useCORS: true
             }).then(canvas => {
                 statEditors.forEach((editor, index) => {
-                    const {nameInput, numberInput, sliderInput} = originalInputs[index];
+                    const { nameInput, numberInput, sliderInput } = originalInputs[index];
                     const nameDiv = editor.querySelector('.stat-name-input');
                     const numberDiv = editor.querySelector('.stat-input');
 
@@ -725,7 +784,7 @@ function exportAllCharts() {
                 });
 
                 const dataUrl = canvas.toDataURL('image/png');
-                zip.file(`${character.name}_характеристики.png`, dataUrl.split(',')[1], {base64: true});
+                zip.file(`${character.name}_характеристики_${scoreSystem}.png`, dataUrl.split(',')[1], { base64: true });
             });
             promises.push(promise);
         }
@@ -757,14 +816,14 @@ function exportAllCharts() {
             comparisonSection.style.cssText = originalStyle;
             toggleContainer.style.display = originalToggleDisplay;
             const dataUrl = canvas.toDataURL('image/png');
-            zip.file('PRGTeamAllProfile.png', dataUrl.split(',')[1], {base64: true});
+            zip.file(`PRGTeamAllProfile_${scoreSystem}.png`, dataUrl.split(',')[1], { base64: true });
         });
         promises.push(promise);
     }
 
     Promise.all(promises).then(() => {
-        zip.generateAsync({type: 'blob'}).then(blob => {
-            saveAs(blob, 'rpg_charts.zip');
+        zip.generateAsync({ type: 'blob' }).then(blob => {
+            saveAs(blob, `rpg_charts_${scoreSystem}.zip`);
         });
     });
 }
