@@ -35,7 +35,7 @@ let characters = [
     id: 5,
     name: 'Настя',
     role: 'dm',
-    stats: [8, 8, 5, 9, 5],
+    stats: [8, 8, 3, 9, 3],
     statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
     color: { background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff' }
   }
