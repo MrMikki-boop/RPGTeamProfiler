@@ -344,11 +344,64 @@ body {
 .comparison-title {
     text-align: center;
     font-size: 1.8rem;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     background: linear-gradient(to right, #ff6b6b 0%, #ff6b6b 45%, #4ecdc4 55%, #4ecdc4 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.character-toggle-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.character-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.character-toggle input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #4ecdc4;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.character-toggle input[type="checkbox"]:checked {
+    background: #4ecdc4;
+    border-color: #4ecdc4;
+    position: relative;
+}
+
+.character-toggle input[type="checkbox"]:checked::after {
+    content: '✔';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.character-toggle label {
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.character-toggle label:hover {
+    color: #4ecdc4;
 }
 
 .delete-btn {
@@ -414,6 +467,11 @@ body {
     }
 
     .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .character-toggle-container {
         flex-direction: column;
         align-items: center;
     }
