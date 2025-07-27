@@ -5,7 +5,7 @@ let characters = [
         role: 'player',
         stats: [8, 2, 6, 7, 6],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(163,138,255,0.3)', border: '#6228d6'}
+        color: { background: 'rgba(163,138,255,0.3)', border: '#6228d6' }
     },
     {
         id: 2,
@@ -13,7 +13,7 @@ let characters = [
         role: 'player',
         stats: [8, 3, 7, 8, 8],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'}
+        color: { background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b' }
     },
     {
         id: 3,
@@ -21,7 +21,7 @@ let characters = [
         role: 'player',
         stats: [6, 7, 4, 7, 2],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'}
+        color: { background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4' }
     },
     {
         id: 4,
@@ -29,7 +29,7 @@ let characters = [
         role: 'player',
         stats: [2, 2, 8, 2, 7],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'}
+        color: { background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1' }
     },
     {
         id: 5,
@@ -37,7 +37,7 @@ let characters = [
         role: 'dm',
         stats: [8, 8, 3, 9, 3],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
+        color: { background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff' }
     }
 ];
 
@@ -52,12 +52,12 @@ let globalStatLabels = [
 let globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
 
 const playerColors = [
-    {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'},
-    {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'},
-    {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'},
-    {background: 'rgba(163,138,255,0.3)', border: '#6228d6'},
-    {background: 'rgba(255, 193, 7, 0.3)', border: '#ffc107'},
-    {background: 'rgba(233, 30, 99, 0.3)', border: '#e91e63'}
+    { background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b' },
+    { background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4' },
+    { background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1' },
+    { background: 'rgba(163,138,255,0.3)', border: '#6228d6' },
+    { background: 'rgba(255, 193, 7, 0.3)', border: '#ffc107' },
+    { background: 'rgba(233, 30, 99, 0.3)', border: '#e91e63' }
 ];
 
 let nextId = 6;
@@ -333,115 +333,12 @@ function updateChart(character) {
 
     if (typeof Chart !== 'undefined') {
         if (chartInstances[character.id]) {
-            chartInstances[character.id].destroy();
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = 380;
-        canvas.height = 380;
-        chartContainer.innerHTML = '';
-        chartContainer.appendChild(canvas);
-        const ctx = canvas.getContext('2d');
-
-        chartInstances[character.id] = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: character.statsLabels,
-                datasets: [{
-                    label: character.name,
-                    data: character.stats,
-                    backgroundColor: character.color.background,
-                    borderColor: character.color.border,
-                    borderWidth: 3,
-                    pointBackgroundColor: character.color.border,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6
-                }]
-            },
-            options: {
-                responsive: false,
-                maintainAspectRatio: true,
-                animation: {
-                    duration: 500,
-                    easing: 'easeOutQuad'
-                },
-                scales: {
-                    r: {
-                        beginAtZero: scoreSystem === '0-10',
-                        min: minValue,
-                        max: maxValue,
-                        ticks: {
-                            stepSize: scoreSystem === '0-10' ? 2 : 2,
-                            backdropColor: 'rgba(0, 0, 0, 0)',
-                            color: 'rgba(255, 255, 255, 0.7)'
-                        },
-                        pointLabels: {
-                            font: {size: 12, weight: 'bold'},
-                            color: '#ffffff'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.2)'
-                        },
-                        angleLines: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {display: false}
-                }
-            }
-        });
-    } else {
-        createSVGRadarChart(chartContainer, character);
-    }
-}
-
-function updateCharacterToggles() {
-    const container = document.getElementById('character-toggles');
-    container.innerHTML = '';
-    characters.forEach(character => {
-        const div = document.createElement('div');
-        div.className = 'character-toggle';
-        div.innerHTML = `
-            <input type="checkbox" id="toggle-${character.id}" 
-                   ${visibleCharacters.includes(character.id) ? 'checked' : ''} 
-                   onchange="toggleCharacterVisibility(${character.id}, this.checked)">
-            <label for="toggle-${character.id}">${character.role === 'dm' ? '🎭' : '🎲'} ${character.name}</label>
-        `;
-        container.appendChild(div);
-    });
-}
-
-function toggleCharacterVisibility(characterId, isVisible) {
-    if (isVisible) {
-        if (!visibleCharacters.includes(characterId)) {
-            visibleCharacters.push(characterId);
-        }
-    } else {
-        visibleCharacters = visibleCharacters.filter(id => id !== characterId);
-    }
-    updateComparisonChart();
-}
-
-function updateChart(character) {
-    const chartContainer = document.getElementById(`chart-${character.id}`);
-    if (!chartContainer) return;
-
-    const maxValue = scoreSystem === '0-10' ? 10 : 5;
-    const minValue = scoreSystem === '0-10' ? 0 : -5;
-
-    if (typeof Chart !== 'undefined') {
-        if (chartInstances[character.id]) {
-            // Обновляем существующую диаграмму
             chartInstances[character.id].data.labels = character.statsLabels;
             chartInstances[character.id].data.datasets[0].data = character.stats;
             chartInstances[character.id].options.scales.r.min = minValue;
             chartInstances[character.id].options.scales.r.max = maxValue;
             chartInstances[character.id].update({ duration: 500, easing: 'easeOutQuad' });
         } else {
-            // Создаем новую диаграмму, если ее нет
             const canvas = document.createElement('canvas');
             canvas.width = 380;
             canvas.height = 380;
@@ -505,6 +402,33 @@ function updateChart(character) {
     }
 }
 
+function updateCharacterToggles() {
+    const container = document.getElementById('character-toggles');
+    container.innerHTML = '';
+    characters.forEach(character => {
+        const div = document.createElement('div');
+        div.className = 'character-toggle';
+        div.innerHTML = `
+            <input type="checkbox" id="toggle-${character.id}" 
+                   ${visibleCharacters.includes(character.id) ? 'checked' : ''} 
+                   onchange="toggleCharacterVisibility(${character.id}, this.checked)">
+            <label for="toggle-${character.id}">${character.role === 'dm' ? '🎭' : '🎲'} ${character.name}</label>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function toggleCharacterVisibility(characterId, isVisible) {
+    if (isVisible) {
+        if (!visibleCharacters.includes(characterId)) {
+            visibleCharacters.push(characterId);
+        }
+    } else {
+        visibleCharacters = visibleCharacters.filter(id => id !== characterId);
+    }
+    updateComparisonChart();
+}
+
 function updateComparisonChart() {
     const chartContainer = document.getElementById('comparison-chart');
     if (!chartContainer) return;
@@ -514,7 +438,6 @@ function updateComparisonChart() {
 
     if (typeof Chart !== 'undefined') {
         if (comparisonChart) {
-            // Обновляем существующую сравнительную диаграмму
             comparisonChart.data.labels = globalStatShortLabels;
             comparisonChart.data.datasets = characters
                 .filter(character => visibleCharacters.includes(character.id))
@@ -532,7 +455,6 @@ function updateComparisonChart() {
             comparisonChart.options.scales.r.max = maxValue;
             comparisonChart.update({ duration: 500, easing: 'easeOutQuad' });
         } else {
-            // Создаем новую сравнительную диаграмму, если ее нет
             const canvas = document.createElement('canvas');
             canvas.width = 380;
             canvas.height = 380;
@@ -659,7 +581,7 @@ function addDM() {
         role: 'dm',
         stats: defaultStats,
         statsLabels: [...globalStatShortLabels],
-        color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
+        color: { background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff' }
     };
     characters.push(newDM);
     visibleCharacters.push(newDM.id);
@@ -706,6 +628,59 @@ function resetAll() {
         createLabelsEditor();
         updateComparisonChart();
         updateExportMenu();
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
+function saveTeamToURL() {
+    const teamData = {
+        characters,
+        globalStatLabels,
+        globalStatShortLabels,
+        scoreSystem,
+        nextId,
+        visibleCharacters
+    };
+    const jsonString = JSON.stringify(teamData);
+    const base64Data = btoa(encodeURIComponent(jsonString));
+    const url = `${window.location.origin}${window.location.pathname}?team=${base64Data}`;
+
+    // Копируем ссылку в буфер обмена
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Ссылка на профили команды скопирована в буфер обмена!');
+    }).catch(err => {
+        console.error('Ошибка копирования:', err);
+        alert(`Ссылка: ${url}\nСкопируйте её вручную.`);
+    });
+}
+
+function loadTeamFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const teamData = urlParams.get('team');
+    if (teamData) {
+        try {
+            const jsonString = decodeURIComponent(atob(teamData));
+            const data = JSON.parse(jsonString);
+
+            // Восстанавливаем данные
+            characters = data.characters || [];
+            globalStatLabels = data.globalStatLabels || globalStatLabels;
+            globalStatShortLabels = data.globalStatShortLabels || globalStatShortLabels;
+            scoreSystem = data.scoreSystem || '0-10';
+            nextId = data.nextId || 6;
+            visibleCharacters = data.visibleCharacters || characters.map(c => c.id);
+
+            // Обновляем интерфейс
+            document.getElementById('score-system').value = scoreSystem;
+            createLabelsEditor();
+            updateAllCards();
+            updateCharacterToggles();
+            updateComparisonChart();
+            updateExportMenu();
+        } catch (e) {
+            console.error('Ошибка загрузки данных из URL:', e);
+            alert('Не удалось загрузить профили команды. Проверьте ссылку.');
+        }
     }
 }
 
@@ -768,7 +743,7 @@ function exportCharacterChart(characterId) {
         numberDiv.style.justifyContent = 'center';
         numberDiv.textContent = numberValue;
 
-        originalInputs.push({nameInput, numberInput, sliderInput});
+        originalInputs.push({ nameInput, numberInput, sliderInput });
 
         nameInput.parentNode.replaceChild(nameDiv, nameInput);
         numberInput.parentNode.replaceChild(numberDiv, numberInput);
@@ -781,7 +756,7 @@ function exportCharacterChart(characterId) {
         useCORS: true
     }).then(canvas => {
         statEditors.forEach((editor, index) => {
-            const {nameInput, numberInput, sliderInput} = originalInputs[index];
+            const { nameInput, numberInput, sliderInput } = originalInputs[index];
             const nameDiv = editor.querySelector('.stat-name-input');
             const numberDiv = editor.querySelector('.stat-input');
 
@@ -864,7 +839,7 @@ function exportAllCharts() {
                 numberDiv.style.justifyContent = 'center';
                 numberDiv.textContent = numberValue;
 
-                originalInputs.push({nameInput, numberInput, sliderInput});
+                originalInputs.push({ nameInput, numberInput, sliderInput });
 
                 nameInput.parentNode.replaceChild(nameDiv, nameInput);
                 numberInput.parentNode.replaceChild(numberDiv, numberInput);
@@ -877,7 +852,7 @@ function exportAllCharts() {
                 useCORS: true
             }).then(canvas => {
                 statEditors.forEach((editor, index) => {
-                    const {nameInput, numberInput, sliderInput} = originalInputs[index];
+                    const { nameInput, numberInput, sliderInput } = originalInputs[index];
                     const nameDiv = editor.querySelector('.stat-name-input');
                     const numberDiv = editor.querySelector('.stat-input');
 
@@ -887,7 +862,7 @@ function exportAllCharts() {
                 });
 
                 const dataUrl = canvas.toDataURL('image/png');
-                zip.file(`${character.name}_характеристики_${scoreSystem}.png`, dataUrl.split(',')[1], {base64: true});
+                zip.file(`${character.name}_характеристики_${scoreSystem}.png`, dataUrl.split(',')[1], { base64: true });
             });
             promises.push(promise);
         }
@@ -919,19 +894,20 @@ function exportAllCharts() {
             comparisonSection.style.cssText = originalStyle;
             toggleContainer.style.display = originalToggleDisplay;
             const dataUrl = canvas.toDataURL('image/png');
-            zip.file(`PRGTeamAllProfile_${scoreSystem}.png`, dataUrl.split(',')[1], {base64: true});
+            zip.file(`PRGTeamAllProfile_${scoreSystem}.png`, dataUrl.split(',')[1], { base64: true });
         });
         promises.push(promise);
     }
 
     Promise.all(promises).then(() => {
-        zip.generateAsync({type: 'blob'}).then(blob => {
+        zip.generateAsync({ type: 'blob' }).then(blob => {
             saveAs(blob, `rpg_charts_${scoreSystem}.zip`);
         });
     });
 }
 
 function initialize() {
+    loadTeamFromURL();
     createLabelsEditor();
     characters.forEach(character => {
         createCharacterCard(character);
