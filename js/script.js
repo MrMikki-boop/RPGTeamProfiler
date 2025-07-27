@@ -210,7 +210,7 @@ function createSVGRadarChart(container, character, isComparison = false) {
         const labelY = center + (maxRadius + 40) * Math.sin(angle);
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('x', labelX);
-        teamData.setAttribute('y', labelY);
+        text.setAttribute('y', labelY);
         text.setAttribute('text-anchor', 'middle');
         text.setAttribute('fill', '#ffffff');
         text.setAttribute('font-size', '12px');
@@ -590,16 +590,21 @@ function deleteCharacter(characterId) {
 
 function saveTeamToURL() {
     const teamData = {
-        characters,
+        characters: characters.map(c => ({
+            id: c.id,
+            name: c.name,
+            role: c.role,
+            stats: c.stats,
+            statsLabels: c.statsLabels,
+            color: c.color
+        })),
         globalStatLabels,
-        globalStatShortLabels,
-        scoreSystem,
-        nextId,
-        visibleCharacters
+        scoreSystem
     };
     const jsonString = JSON.stringify(teamData);
-    const base64Data = btoa(encodeURIComponent(jsonString));
-    const url = `${window.location.origin}${window.location.pathname}?team=${base64Data}`;
+    const compressed = pako.gzip(jsonString);
+    const base64Data = btoa(String.fromCharCode.apply(null, compressed));
+    const url = `${window.location.origin}${window.location.pathname}?team=${encodeURIComponent(base64Data)}`;
 
     navigator.clipboard.writeText(url).then(() => {
         alert('Ссылка на профили команды скопирована в буфер обмена!');
@@ -614,15 +619,21 @@ function loadTeamFromURL() {
     const teamData = urlParams.get('team');
     if (teamData) {
         try {
-            const jsonString = decodeURIComponent(atob(teamData));
+            const decoded = decodeURIComponent(teamData);
+            const binary = atob(decoded);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            const jsonString = pako.ungzip(bytes, { to: 'string' });
             const data = JSON.parse(jsonString);
 
             characters = data.characters || [];
             globalStatLabels = data.globalStatLabels || globalStatLabels;
-            globalStatShortLabels = data.globalStatShortLabels || globalStatShortLabels;
+            globalStatShortLabels = globalStatLabels.map(label => label.split('/')[0].trim());
             scoreSystem = data.scoreSystem || '0-10';
-            nextId = data.nextId || 6;
-            visibleCharacters = data.visibleCharacters || characters.map(c => c.id);
+            nextId = characters.length > 0 ? Math.max(...characters.map(c => c.id)) + 1 : 6;
+            visibleCharacters = characters.map(c => c.id);
 
             document.getElementById('score-system').value = scoreSystem;
         } catch (e) {
@@ -634,7 +645,6 @@ function loadTeamFromURL() {
 
 function resetAll() {
     if (confirm('Сбросить все данные? Это действие нельзя отменить.')) {
-        // Восстанавливаем исходные данные
         characters = [
             {
                 id: 1,

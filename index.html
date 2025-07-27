@@ -10,13 +10,18 @@
     <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
 </head>
 <body>
 <div class="header">
     <h1>⚔️ Интерактивные профили НРИ-команды ⚔️</h1>
     <p>Настраивайте характеристики в реальном времени</p>
 </div>
-
 <div class="controls">
     <button class="control-btn" onclick="addPlayer()">➕ Добавить игрока</button>
     <button class="control-btn" onclick="addDM()">🎭 Добавить ДМ</button>
@@ -41,21 +46,16 @@
 </div>
 <div class="stats-labels-editor">
     <h3>Редактор меток характеристик</h3>
-    <div class="labels-grid" id="labels-editor"></div>
+    <div id="labels-editor" class="labels-grid"></div>
 </div>
-<div class="charts-grid" id="charts-container"></div>
-<div class="comparison-section" id="comparison-section">
+<div id="charts-container" class="charts-grid"></div>
+<div id="comparison-section" class="comparison-section">
     <h2 class="comparison-title">📊 Сравнительный анализ команды</h2>
-    <div class="character-toggle-container" id="character-toggles"></div>
+    <div id="character-toggles" class="character-toggle-container"></div>
     <div class="chart-canvas">
         <div class="radar-chart" id="comparison-chart"></div>
     </div>
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.2.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="js/script.js"></script>
 </body>
 </html>
