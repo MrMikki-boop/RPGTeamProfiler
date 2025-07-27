@@ -5,7 +5,7 @@ let characters = [
         role: 'player',
         stats: [8, 2, 6, 7, 6],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: { background: 'rgba(163,138,255,0.3)', border: '#6228d6' }
+        color: {background: 'rgba(163,138,255,0.3)', border: '#6228d6'}
     },
     {
         id: 2,
@@ -13,7 +13,7 @@ let characters = [
         role: 'player',
         stats: [8, 3, 7, 8, 8],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: { background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b' }
+        color: {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'}
     },
     {
         id: 3,
@@ -21,7 +21,7 @@ let characters = [
         role: 'player',
         stats: [6, 7, 4, 7, 2],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: { background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4' }
+        color: {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'}
     },
     {
         id: 4,
@@ -29,7 +29,7 @@ let characters = [
         role: 'player',
         stats: [2, 2, 8, 2, 7],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: { background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1' }
+        color: {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'}
     },
     {
         id: 5,
@@ -37,7 +37,7 @@ let characters = [
         role: 'dm',
         stats: [8, 8, 3, 9, 3],
         statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: { background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff' }
+        color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
     }
 ];
 
@@ -52,12 +52,12 @@ let globalStatLabels = [
 let globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
 
 const playerColors = [
-    { background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b' },
-    { background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4' },
-    { background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1' },
-    { background: 'rgba(163,138,255,0.3)', border: '#6228d6' },
-    { background: 'rgba(255, 193, 7, 0.3)', border: '#ffc107' },
-    { background: 'rgba(233, 30, 99, 0.3)', border: '#e91e63' }
+    {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'},
+    {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'},
+    {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'},
+    {background: 'rgba(163,138,255,0.3)', border: '#6228d6'},
+    {background: 'rgba(255, 193, 7, 0.3)', border: '#ffc107'},
+    {background: 'rgba(233, 30, 99, 0.3)', border: '#e91e63'}
 ];
 
 let nextId = 6;
@@ -210,7 +210,7 @@ function createSVGRadarChart(container, character, isComparison = false) {
         const labelY = center + (maxRadius + 40) * Math.sin(angle);
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('x', labelX);
-        text.setAttribute('y', labelY);
+        teamData.setAttribute('y', labelY);
         text.setAttribute('text-anchor', 'middle');
         text.setAttribute('fill', '#ffffff');
         text.setAttribute('font-size', '12px');
@@ -363,8 +363,8 @@ function updateChart(character) {
                 responsive: false,
                 maintainAspectRatio: true,
                 animation: {
-                    duration: 500, // Плавная анимация за 0.5 секунды
-                    easing: 'easeInOutQuad' // Плавное ускорение и замедление
+                    duration: 500,
+                    easing: 'easeOutQuad'
                 },
                 scales: {
                     r: {
@@ -377,7 +377,7 @@ function updateChart(character) {
                             color: 'rgba(255, 255, 255, 0.7)'
                         },
                         pointLabels: {
-                            font: { size: 12, weight: 'bold' },
+                            font: {size: 12, weight: 'bold'},
                             color: '#ffffff'
                         },
                         grid: {
@@ -389,7 +389,7 @@ function updateChart(character) {
                     }
                 },
                 plugins: {
-                    legend: { display: false }
+                    legend: {display: false}
                 }
             }
         });
@@ -465,8 +465,8 @@ function updateComparisonChart() {
                 responsive: false,
                 maintainAspectRatio: true,
                 animation: {
-                    duration: 500, // Плавная анимация за 0.5 секунды
-                    easing: 'easeInOutQuad' // Плавное ускорение и замедление
+                    duration: 500,
+                    easing: 'easeOutQuad'
                 },
                 scales: {
                     r: {
@@ -479,7 +479,7 @@ function updateComparisonChart() {
                             color: 'rgba(255, 255, 255, 0.7)'
                         },
                         pointLabels: {
-                            font: { size: 12, weight: 'bold' },
+                            font: {size: 12, weight: 'bold'},
                             color: '#ffffff'
                         },
                         grid: {
@@ -495,7 +495,7 @@ function updateComparisonChart() {
                         position: 'bottom',
                         labels: {
                             color: '#ffffff',
-                            font: { size: 12 },
+                            font: {size: 12},
                             padding: 15
                         }
                     }
@@ -562,7 +562,7 @@ function addDM() {
         role: 'dm',
         stats: defaultStats,
         statsLabels: [...globalStatShortLabels],
-        color: { background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff' }
+        color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
     };
     characters.push(newDM);
     visibleCharacters.push(newDM.id);
@@ -588,31 +588,6 @@ function deleteCharacter(characterId) {
     }
 }
 
-function resetAll() {
-    if (confirm('Сбросить все данные? Это действие нельзя отменить.')) {
-        characters = [];
-        visibleCharacters = [];
-        globalStatLabels = [
-            'Ролеплей/Нарратив',
-            'Импровизация',
-            'Знание правил',
-            'Социальность/Справедливость',
-            'Тактика/Подготовка'
-        ];
-        globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
-        scoreSystem = '0-10';
-        document.getElementById('score-system').value = '0-10';
-        document.getElementById('charts-container').innerHTML = '';
-        document.getElementById('character-toggles').innerHTML = '';
-        Object.values(chartInstances).forEach(chart => chart.destroy());
-        chartInstances = {};
-        createLabelsEditor();
-        updateComparisonChart();
-        updateExportMenu();
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-}
-
 function saveTeamToURL() {
     const teamData = {
         characters,
@@ -626,7 +601,6 @@ function saveTeamToURL() {
     const base64Data = btoa(encodeURIComponent(jsonString));
     const url = `${window.location.origin}${window.location.pathname}?team=${base64Data}`;
 
-    // Копируем ссылку в буфер обмена
     navigator.clipboard.writeText(url).then(() => {
         alert('Ссылка на профили команды скопирована в буфер обмена!');
     }).catch(err => {
@@ -643,7 +617,6 @@ function loadTeamFromURL() {
             const jsonString = decodeURIComponent(atob(teamData));
             const data = JSON.parse(jsonString);
 
-            // Восстанавливаем данные
             characters = data.characters || [];
             globalStatLabels = data.globalStatLabels || globalStatLabels;
             globalStatShortLabels = data.globalStatShortLabels || globalStatShortLabels;
@@ -651,17 +624,82 @@ function loadTeamFromURL() {
             nextId = data.nextId || 6;
             visibleCharacters = data.visibleCharacters || characters.map(c => c.id);
 
-            // Обновляем интерфейс
             document.getElementById('score-system').value = scoreSystem;
-            createLabelsEditor();
-            updateAllCards();
-            updateCharacterToggles();
-            updateComparisonChart();
-            updateExportMenu();
         } catch (e) {
             console.error('Ошибка загрузки данных из URL:', e);
             alert('Не удалось загрузить профили команды. Проверьте ссылку.');
         }
+    }
+}
+
+function resetAll() {
+    if (confirm('Сбросить все данные? Это действие нельзя отменить.')) {
+        // Восстанавливаем исходные данные
+        characters = [
+            {
+                id: 1,
+                name: 'Сергей',
+                role: 'player',
+                stats: [8, 2, 6, 7, 6],
+                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
+                color: {background: 'rgba(163,138,255,0.3)', border: '#6228d6'}
+            },
+            {
+                id: 2,
+                name: 'Дима',
+                role: 'player',
+                stats: [8, 3, 7, 8, 8],
+                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
+                color: {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'}
+            },
+            {
+                id: 3,
+                name: 'Витя',
+                role: 'player',
+                stats: [6, 7, 4, 7, 2],
+                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
+                color: {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'}
+            },
+            {
+                id: 4,
+                name: 'Денис',
+                role: 'player',
+                stats: [2, 2, 8, 2, 7],
+                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
+                color: {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'}
+            },
+            {
+                id: 5,
+                name: 'Настя',
+                role: 'dm',
+                stats: [8, 8, 3, 9, 3],
+                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
+                color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
+            }
+        ];
+        visibleCharacters = characters.map(c => c.id);
+        globalStatLabels = [
+            'Ролеплей/Нарратив',
+            'Импровизация',
+            'Знание правил',
+            'Социальность/Справедливость',
+            'Тактика/Подготовка'
+        ];
+        globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
+        scoreSystem = '0-10';
+        nextId = 6;
+
+        document.getElementById('score-system').value = '0-10';
+        document.getElementById('charts-container').innerHTML = '';
+        document.getElementById('character-toggles').innerHTML = '';
+        Object.values(chartInstances).forEach(chart => chart.destroy());
+        chartInstances = {};
+        createLabelsEditor();
+        updateAllCards();
+        updateCharacterToggles();
+        updateComparisonChart();
+        updateExportMenu();
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
 
@@ -724,7 +762,7 @@ function exportCharacterChart(characterId) {
         numberDiv.style.justifyContent = 'center';
         numberDiv.textContent = numberValue;
 
-        originalInputs.push({ nameInput, numberInput, sliderInput });
+        originalInputs.push({nameInput, numberInput, sliderInput});
 
         nameInput.parentNode.replaceChild(nameDiv, nameInput);
         numberInput.parentNode.replaceChild(numberDiv, numberInput);
@@ -737,7 +775,7 @@ function exportCharacterChart(characterId) {
         useCORS: true
     }).then(canvas => {
         statEditors.forEach((editor, index) => {
-            const { nameInput, numberInput, sliderInput } = originalInputs[index];
+            const {nameInput, numberInput, sliderInput} = originalInputs[index];
             const nameDiv = editor.querySelector('.stat-name-input');
             const numberDiv = editor.querySelector('.stat-input');
 
@@ -820,7 +858,7 @@ function exportAllCharts() {
                 numberDiv.style.justifyContent = 'center';
                 numberDiv.textContent = numberValue;
 
-                originalInputs.push({ nameInput, numberInput, sliderInput });
+                originalInputs.push({nameInput, numberInput, sliderInput});
 
                 nameInput.parentNode.replaceChild(nameDiv, nameInput);
                 numberInput.parentNode.replaceChild(numberDiv, numberInput);
@@ -833,7 +871,7 @@ function exportAllCharts() {
                 useCORS: true
             }).then(canvas => {
                 statEditors.forEach((editor, index) => {
-                    const { nameInput, numberInput, sliderInput } = originalInputs[index];
+                    const {nameInput, numberInput, sliderInput} = originalInputs[index];
                     const nameDiv = editor.querySelector('.stat-name-input');
                     const numberDiv = editor.querySelector('.stat-input');
 
@@ -843,7 +881,7 @@ function exportAllCharts() {
                 });
 
                 const dataUrl = canvas.toDataURL('image/png');
-                zip.file(`${character.name}_характеристики_${scoreSystem}.png`, dataUrl.split(',')[1], { base64: true });
+                zip.file(`${character.name}_характеристики_${scoreSystem}.png`, dataUrl.split(',')[1], {base64: true});
             });
             promises.push(promise);
         }
@@ -875,20 +913,23 @@ function exportAllCharts() {
             comparisonSection.style.cssText = originalStyle;
             toggleContainer.style.display = originalToggleDisplay;
             const dataUrl = canvas.toDataURL('image/png');
-            zip.file(`PRGTeamAllProfile_${scoreSystem}.png`, dataUrl.split(',')[1], { base64: true });
+            zip.file(`PRGTeamAllProfile_${scoreSystem}.png`, dataUrl.split(',')[1], {base64: true});
         });
         promises.push(promise);
     }
 
     Promise.all(promises).then(() => {
-        zip.generateAsync({ type: 'blob' }).then(blob => {
+        zip.generateAsync({type: 'blob'}).then(blob => {
             saveAs(blob, `rpg_charts_${scoreSystem}.zip`);
         });
     });
 }
 
 function initialize() {
-    loadTeamFromURL();
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('team')) {
+        loadTeamFromURL();
+    }
     createLabelsEditor();
     characters.forEach(character => {
         createCharacterCard(character);
