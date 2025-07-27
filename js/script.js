@@ -333,70 +333,66 @@ function updateChart(character) {
 
     if (typeof Chart !== 'undefined') {
         if (chartInstances[character.id]) {
-            chartInstances[character.id].data.labels = character.statsLabels;
-            chartInstances[character.id].data.datasets[0].data = character.stats;
-            chartInstances[character.id].options.scales.r.min = minValue;
-            chartInstances[character.id].options.scales.r.max = maxValue;
-            chartInstances[character.id].update({ duration: 500, easing: 'easeOutQuad' });
-        } else {
-            const canvas = document.createElement('canvas');
-            canvas.width = 380;
-            canvas.height = 380;
-            chartContainer.innerHTML = '';
-            chartContainer.appendChild(canvas);
-            const ctx = canvas.getContext('2d');
-
-            chartInstances[character.id] = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: character.statsLabels,
-                    datasets: [{
-                        label: character.name,
-                        data: character.stats,
-                        backgroundColor: character.color.background,
-                        borderColor: character.color.border,
-                        borderWidth: 3,
-                        pointBackgroundColor: character.color.border,
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: true,
-                    scales: {
-                        r: {
-                            beginAtZero: scoreSystem === '0-10',
-                            min: minValue,
-                            max: maxValue,
-                            ticks: {
-                                stepSize: scoreSystem === '0-10' ? 2 : 2,
-                                backdropColor: 'rgba(0, 0, 0, 0)',
-                                color: 'rgba(255, 255, 255, 0.7)'
-                            },
-                            pointLabels: {
-                                font: { size: 12, weight: 'bold' },
-                                color: '#ffffff'
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.2)'
-                            },
-                            angleLines: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    animation: {
-                        duration: 500,
-                        easing: 'easeOutQuad'
-                    }
-                }
-            });
+            chartInstances[character.id].destroy();
         }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 380;
+        canvas.height = 380;
+        chartContainer.innerHTML = '';
+        chartContainer.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+
+        chartInstances[character.id] = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: character.statsLabels,
+                datasets: [{
+                    label: character.name,
+                    data: character.stats,
+                    backgroundColor: character.color.background,
+                    borderColor: character.color.border,
+                    borderWidth: 3,
+                    pointBackgroundColor: character.color.border,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: true,
+                animation: {
+                    duration: 500, // Плавная анимация за 0.5 секунды
+                    easing: 'easeInOutQuad' // Плавное ускорение и замедление
+                },
+                scales: {
+                    r: {
+                        beginAtZero: scoreSystem === '0-10',
+                        min: minValue,
+                        max: maxValue,
+                        ticks: {
+                            stepSize: scoreSystem === '0-10' ? 2 : 2,
+                            backdropColor: 'rgba(0, 0, 0, 0)',
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        },
+                        pointLabels: {
+                            font: { size: 12, weight: 'bold' },
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.2)'
+                        },
+                        angleLines: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
     } else {
         createSVGRadarChart(chartContainer, character);
     }
@@ -438,89 +434,74 @@ function updateComparisonChart() {
 
     if (typeof Chart !== 'undefined') {
         if (comparisonChart) {
-            comparisonChart.data.labels = globalStatShortLabels;
-            comparisonChart.data.datasets = characters
-                .filter(character => visibleCharacters.includes(character.id))
-                .map(character => ({
-                    label: `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`,
-                    data: character.stats,
-                    backgroundColor: character.color.background,
-                    borderColor: character.color.border,
-                    borderWidth: 2,
-                    pointBackgroundColor: character.color.border,
-                    pointBorderColor: '#fff',
-                    pointRadius: 5
-                }));
-            comparisonChart.options.scales.r.min = minValue;
-            comparisonChart.options.scales.r.max = maxValue;
-            comparisonChart.update({ duration: 500, easing: 'easeOutQuad' });
-        } else {
-            const canvas = document.createElement('canvas');
-            canvas.width = 380;
-            canvas.height = 380;
-            chartContainer.innerHTML = '';
-            chartContainer.appendChild(canvas);
-            const ctx = canvas.getContext('2d');
+            comparisonChart.destroy();
+        }
 
-            comparisonChart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: globalStatShortLabels,
-                    datasets: characters
-                        .filter(character => visibleCharacters.includes(character.id))
-                        .map(character => ({
-                            label: `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`,
-                            data: character.stats,
-                            backgroundColor: character.color.background,
-                            borderColor: character.color.border,
-                            borderWidth: 2,
-                            pointBackgroundColor: character.color.border,
-                            pointBorderColor: '#fff',
-                            pointRadius: 5
-                        }))
+        const canvas = document.createElement('canvas');
+        canvas.width = 380;
+        canvas.height = 380;
+        chartContainer.innerHTML = '';
+        chartContainer.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+
+        comparisonChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: globalStatShortLabels,
+                datasets: characters
+                    .filter(character => visibleCharacters.includes(character.id))
+                    .map(character => ({
+                        label: `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`,
+                        data: character.stats,
+                        backgroundColor: character.color.background,
+                        borderColor: character.color.border,
+                        borderWidth: 2,
+                        pointBackgroundColor: character.color.border,
+                        pointBorderColor: '#fff',
+                        pointRadius: 5
+                    }))
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: true,
+                animation: {
+                    duration: 500, // Плавная анимация за 0.5 секунды
+                    easing: 'easeInOutQuad' // Плавное ускорение и замедление
                 },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: true,
-                    scales: {
-                        r: {
-                            beginAtZero: scoreSystem === '0-10',
-                            min: minValue,
-                            max: maxValue,
-                            ticks: {
-                                stepSize: scoreSystem === '0-10' ? 2 : 2,
-                                backdropColor: 'rgba(0, 0, 0, 0)',
-                                color: 'rgba(255, 255, 255, 0.7)'
-                            },
-                            pointLabels: {
-                                font: { size: 12, weight: 'bold' },
-                                color: '#ffffff'
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.2)'
-                            },
-                            angleLines: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
+                scales: {
+                    r: {
+                        beginAtZero: scoreSystem === '0-10',
+                        min: minValue,
+                        max: maxValue,
+                        ticks: {
+                            stepSize: scoreSystem === '0-10' ? 2 : 2,
+                            backdropColor: 'rgba(0, 0, 0, 0)',
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        },
+                        pointLabels: {
+                            font: { size: 12, weight: 'bold' },
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.2)'
+                        },
+                        angleLines: {
+                            color: 'rgba(255, 255, 255, 0.1)'
                         }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#ffffff',
-                                font: { size: 12 },
-                                padding: 15
-                            }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#ffffff',
+                            font: { size: 12 },
+                            padding: 15
                         }
-                    },
-                    animation: {
-                        duration: 500,
-                        easing: 'easeOutQuad'
                     }
                 }
-            });
-        }
+            }
+        });
     } else {
         createSVGRadarChart(chartContainer, null, true);
     }
