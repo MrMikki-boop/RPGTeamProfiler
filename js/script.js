@@ -51,6 +51,14 @@ let globalStatLabels = [
 
 let globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
 
+const statDescriptions = {
+    'Ролеплей': 'Способность глубоко вживаться в роль персонажа, создавая убедительную историю.',
+    'Импровизация': 'Умение быстро реагировать и придумывать решения в неожиданных ситуациях.',
+    'Правила': 'Знание игровой механики и правил системы настольной ролевой игры.',
+    'Социальность': 'Навыки взаимодействия с другими игроками, поддержание атмосферы и справедливости.',
+    'Тактика': 'Умение планировать действия и эффективно использовать игровые ресурсы.'
+};
+
 const playerColors = [
     {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'},
     {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'},
@@ -226,6 +234,12 @@ function createSVGRadarChart(container, character, isComparison = false) {
             tspan.textContent = line;
             text.appendChild(tspan);
         });
+
+        if (isComparison && statDescriptions[labelText]) {
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            title.textContent = statDescriptions[labelText];
+            text.appendChild(title);
+        }
 
         svg.appendChild(text);
     }
@@ -632,7 +646,7 @@ function loadTeamFromURL() {
             globalStatLabels = data.globalStatLabels || globalStatLabels;
             globalStatShortLabels = globalStatLabels.map(label => label.split('/')[0].trim());
             scoreSystem = data.scoreSystem || '0-10';
-            nextId = characters.length > 0 ? Math.max(...characters.map(c => c.id)) + 1 : 6;
+            nextId = characters.length > 0 ? Math.max(...characters.map(c => c.id)) + 1 : 1;
             visibleCharacters = characters.map(c => c.id);
 
             document.getElementById('score-system').value = scoreSystem;
@@ -645,49 +659,8 @@ function loadTeamFromURL() {
 
 function resetAll() {
     if (confirm('Сбросить все данные? Это действие нельзя отменить.')) {
-        characters = [
-            {
-                id: 1,
-                name: 'Сергей',
-                role: 'player',
-                stats: [8, 2, 6, 7, 6],
-                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-                color: {background: 'rgba(163,138,255,0.3)', border: '#6228d6'}
-            },
-            {
-                id: 2,
-                name: 'Дима',
-                role: 'player',
-                stats: [8, 3, 7, 8, 8],
-                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-                color: {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'}
-            },
-            {
-                id: 3,
-                name: 'Витя',
-                role: 'player',
-                stats: [6, 7, 4, 7, 2],
-                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-                color: {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'}
-            },
-            {
-                id: 4,
-                name: 'Денис',
-                role: 'player',
-                stats: [2, 2, 8, 2, 7],
-                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-                color: {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'}
-            },
-            {
-                id: 5,
-                name: 'Настя',
-                role: 'dm',
-                stats: [8, 8, 3, 9, 3],
-                statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-                color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
-            }
-        ];
-        visibleCharacters = characters.map(c => c.id);
+        characters = [];
+        visibleCharacters = [];
         globalStatLabels = [
             'Ролеплей/Нарратив',
             'Импровизация',
@@ -697,13 +670,18 @@ function resetAll() {
         ];
         globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
         scoreSystem = '0-10';
-        nextId = 6;
+        nextId = 1;
 
         document.getElementById('score-system').value = '0-10';
         document.getElementById('charts-container').innerHTML = '';
         document.getElementById('character-toggles').innerHTML = '';
+        document.getElementById('comparison-chart').innerHTML = '';
         Object.values(chartInstances).forEach(chart => chart.destroy());
         chartInstances = {};
+        if (comparisonChart) {
+            comparisonChart.destroy();
+            comparisonChart = null;
+        }
         createLabelsEditor();
         updateAllCards();
         updateCharacterToggles();
