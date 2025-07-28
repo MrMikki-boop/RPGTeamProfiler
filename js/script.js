@@ -115,10 +115,19 @@ function updateGlobalStatLabel(index, value) {
 
     characters.forEach(character => {
         character.statsLabels[index] = globalStatShortLabels[index];
+        const chart = chartInstances[character.id];
+        if (chart) {
+            chart.data.labels[index] = globalStatShortLabels[index];
+            chart.update();
+        }
     });
 
+    if (comparisonChart) {
+        comparisonChart.data.labels[index] = globalStatShortLabels[index];
+        comparisonChart.update();
+    }
+
     updateAllCards();
-    updateComparisonChart();
 }
 
 function updateCharacterStatLabel(characterId, index, value) {
@@ -129,28 +138,66 @@ function updateCharacterStatLabel(characterId, index, value) {
         } else {
             character.statsLabels[index] = value.trim();
         }
-        updateChart(character);
-        updateComparisonChart();
+        const chart = chartInstances[characterId];
+        if (chart) {
+            chart.data.labels[index] = character.statsLabels[index];
+            chart.update();
+        }
+        if (comparisonChart) {
+            comparisonChart.update();
+        }
     }
 }
 
 function changeScoreSystem(newSystem) {
     if (newSystem === scoreSystem) return;
 
+    const oldSystem = scoreSystem;
+    scoreSystem = newSystem;
+    const maxValue = scoreSystem === '0-10' ? 10 : 5;
+    const minValue = scoreSystem === '0-10' ? 0 : -5;
+
     characters.forEach(character => {
         character.stats = character.stats.map(stat => {
-            if (scoreSystem === '0-10' && newSystem === '-5-5') {
+            if (oldSystem === '0-10' && newSystem === '-5-5') {
                 return (stat - 5) * 1;
-            } else if (scoreSystem === '-5-5' && newSystem === '0-10') {
+            } else if (oldSystem === '-5-5' && newSystem === '0-10') {
                 return (stat + 5) * 1;
             }
             return stat;
         });
+        const chart = chartInstances[character.id];
+        if (chart) {
+            chart.data.datasets[0].data = character.stats;
+            chart.options.scales.r.min = minValue;
+            chart.options.scales.r.max = maxValue;
+            chart.options.scales.r.beginAtZero = scoreSystem === '0-10';
+            chart.options.scales.r.ticks.stepSize = scoreSystem === '0-10' ? 2 : 2;
+            chart.update();
+        }
     });
 
-    scoreSystem = newSystem;
+    if (comparisonChart) {
+        comparisonChart.data.datasets = characters
+            .filter(c => visibleCharacters.includes(c.id))
+            .map(c => ({
+                label: `${c.role === 'dm' ? 'ДМ ' : ''}${c.name}`,
+                data: c.stats,
+                backgroundColor: c.color.background,
+                borderColor: c.color.border,
+                borderWidth: 2,
+                pointBackgroundColor: c.color.border,
+                pointBorderColor: '#fff',
+                pointRadius: 5
+            }));
+        comparisonChart.options.scales.r.min = minValue;
+        comparisonChart.options.scales.r.max = maxValue;
+        comparisonChart.options.scales.r.beginAtZero = scoreSystem === '0-10';
+        comparisonChart.options.scales.r.ticks.stepSize = scoreSystem === '0-10' ? 2 : 2;
+        comparisonChart.update();
+    }
+
     updateAllCards();
-    updateComparisonChart();
 }
 
 function updateAllCards() {
@@ -276,6 +323,7 @@ function createDataPolygon(svg, character, center, maxRadius, angleStep) {
     polygon.setAttribute('fill', character.color.background);
     polygon.setAttribute('stroke', character.color.border);
     polygon.setAttribute('stroke-width', '2');
+    polygon.setAttribute('class', 'data-polygon');
     svg.appendChild(polygon);
 
     for (let i = 0; i < character.stats.length; i++) {
@@ -293,6 +341,7 @@ function createDataPolygon(svg, character, center, maxRadius, angleStep) {
         circle.setAttribute('fill', character.color.border);
         circle.setAttribute('stroke', '#fff');
         circle.setAttribute('stroke-width', '2');
+        circle.setAttribute('class', 'data-point');
         svg.appendChild(circle);
     }
 }
@@ -377,8 +426,8 @@ function updateChart(character) {
                 responsive: false,
                 maintainAspectRatio: true,
                 animation: {
-                    duration: 500,
-                    easing: 'easeOutQuad'
+                    duration: 800,
+                    easing: 'easeOutCubic'
                 },
                 scales: {
                     r: {
@@ -448,74 +497,86 @@ function updateComparisonChart() {
 
     if (typeof Chart !== 'undefined') {
         if (comparisonChart) {
-            comparisonChart.destroy();
-        }
+            comparisonChart.data.datasets = characters
+                .filter(character => visibleCharacters.includes(character.id))
+                .map(character => ({
+                    label: `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`,
+                    data: character.stats,
+                    backgroundColor: character.color.background,
+                    borderColor: character.color.border,
+                    borderWidth: 2,
+                    pointBackgroundColor: character.color.border,
+                    pointBorderColor: '#fff',
+                    pointRadius: 5
+                }));
+            comparisonChart.update();
+        } else {
+            const canvas = document.createElement('canvas');
+            canvas.width = 380;
+            canvas.height = 380;
+            chartContainer.innerHTML = '';
+            chartContainer.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
 
-        const canvas = document.createElement('canvas');
-        canvas.width = 380;
-        canvas.height = 380;
-        chartContainer.innerHTML = '';
-        chartContainer.appendChild(canvas);
-        const ctx = canvas.getContext('2d');
-
-        comparisonChart = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: globalStatShortLabels,
-                datasets: characters
-                    .filter(character => visibleCharacters.includes(character.id))
-                    .map(character => ({
-                        label: `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`,
-                        data: character.stats,
-                        backgroundColor: character.color.background,
-                        borderColor: character.color.border,
-                        borderWidth: 2,
-                        pointBackgroundColor: character.color.border,
-                        pointBorderColor: '#fff',
-                        pointRadius: 5
-                    }))
-            },
-            options: {
-                responsive: false,
-                maintainAspectRatio: true,
-                animation: {
-                    duration: 500,
-                    easing: 'easeOutQuad'
+            comparisonChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: globalStatShortLabels,
+                    datasets: characters
+                        .filter(character => visibleCharacters.includes(character.id))
+                        .map(character => ({
+                            label: `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`,
+                            data: character.stats,
+                            backgroundColor: character.color.background,
+                            borderColor: character.color.border,
+                            borderWidth: 2,
+                            pointBackgroundColor: character.color.border,
+                            pointBorderColor: '#fff',
+                            pointRadius: 5
+                        }))
                 },
-                scales: {
-                    r: {
-                        beginAtZero: scoreSystem === '0-10',
-                        min: minValue,
-                        max: maxValue,
-                        ticks: {
-                            stepSize: scoreSystem === '0-10' ? 2 : 2,
-                            backdropColor: 'rgba(0, 0, 0, 0)',
-                            color: 'rgba(255, 255, 255, 0.7)'
-                        },
-                        pointLabels: {
-                            font: {size: 12, weight: 'bold'},
-                            color: '#ffffff'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.2)'
-                        },
-                        angleLines: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: true,
+                    animation: {
+                        duration: 800,
+                        easing: 'easeOutCubic'
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: scoreSystem === '0-10',
+                            min: minValue,
+                            max: maxValue,
+                            ticks: {
+                                stepSize: scoreSystem === '0-10' ? 2 : 2,
+                                backdropColor: 'rgba(0, 0, 0, 0)',
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            },
+                            pointLabels: {
+                                font: {size: 12, weight: 'bold'},
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            },
+                            angleLines: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
                         }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#ffffff',
-                            font: {size: 12},
-                            padding: 15
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                font: {size: 12},
+                                padding: 15
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     } else {
         createSVGRadarChart(chartContainer, null, true);
     }
@@ -528,8 +589,32 @@ function updateStat(characterId, statIndex, value) {
     const character = characters.find(c => c.id === characterId);
     if (character) {
         character.stats[statIndex] = value;
-        updateChart(character);
-        updateComparisonChart();
+
+        const chart = chartInstances[characterId];
+        if (chart) {
+            chart.data.datasets[0].data[statIndex] = value;
+            chart.update();
+        } else {
+            const chartContainer = document.getElementById(`chart-${characterId}`);
+            if (chartContainer) {
+                createSVGRadarChart(chartContainer, character);
+            }
+        }
+
+        if (comparisonChart) {
+            const datasetIndex = comparisonChart.data.datasets.findIndex(
+                ds => ds.label === `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`
+            );
+            if (datasetIndex !== -1) {
+                comparisonChart.data.datasets[datasetIndex].data[statIndex] = value;
+                comparisonChart.update();
+            }
+        } else {
+            const chartContainer = document.getElementById('comparison-chart');
+            if (chartContainer) {
+                createSVGRadarChart(chartContainer, null, true);
+            }
+        }
 
         const card = document.getElementById(`card-${characterId}`);
         const statEditor = card.querySelector(`.stat-editor:nth-child(${statIndex + 1})`);
@@ -543,9 +628,22 @@ function updateStat(characterId, statIndex, value) {
 function updateCharacterName(characterId, name) {
     const character = characters.find(c => c.id === characterId);
     if (character) {
+        const oldName = character.name;
         character.name = name;
-        updateChart(character);
-        updateComparisonChart();
+        const chart = chartInstances[characterId];
+        if (chart) {
+            chart.data.datasets[0].label = name;
+            chart.update();
+        }
+        if (comparisonChart) {
+            const datasetIndex = comparisonChart.data.datasets.findIndex(
+                ds => ds.label === `${character.role === 'dm' ? 'ДМ ' : ''}${oldName}`
+            );
+            if (datasetIndex !== -1) {
+                comparisonChart.data.datasets[datasetIndex].label = `${character.role === 'dm' ? 'ДМ ' : ''}${name}`;
+                comparisonChart.update();
+            }
+        }
         updateCharacterToggles();
         updateExportMenu();
     }
