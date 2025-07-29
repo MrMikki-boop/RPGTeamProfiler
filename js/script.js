@@ -473,6 +473,16 @@ function updateCharacterToggles() {
                    onchange="toggleCharacterVisibility(${character.id}, this.checked)">
             <label for="toggle-${character.id}">${character.role === 'dm' ? '🎭' : '🎲'} ${character.name}</label>
         `;
+
+        div.addEventListener('click', function(e) {
+            // Предотвращаем двойное срабатывание, если клик по checkbox или label
+            if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL') return;
+
+            const checkbox = div.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            toggleCharacterVisibility(character.id, checkbox.checked);
+        });
+
         container.appendChild(div);
     });
 }
