@@ -958,7 +958,7 @@ body::before {
 
 .comparison-section.export-ready .comparison-title {
     color: var(--text-primary) !important;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    text-shadow: 0 2px 4px rgb(255, 255, 255) !important;
     margin-bottom: 30px !important;
 }
 
@@ -968,7 +968,7 @@ body::before {
     bottom: 8px !important;
     right: 12px !important;
     font-size: 0.7rem !important;
-    color: rgba(255, 255, 255, 0.3) !important;
+    color: rgb(255, 255, 255) !important;
     font-weight: 500 !important;
     letter-spacing: 0.5px !important;
     pointer-events: none !important;
