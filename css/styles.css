@@ -665,12 +665,14 @@ body::before {
 
 .section-title {
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     padding: 14px 18px;
     cursor: default;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--accent-primary);
     font-size: 0.85em;
     text-transform: uppercase;
+    cursor: default;
+    pointer-events: none;
     letter-spacing: 0.5px;
 }
 
