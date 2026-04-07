@@ -4,58 +4,1539 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RPG Team Profiler</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
-    <link rel="manifest" href="site.webmanifest">
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --bg0: #0d0d14;
+            --bg1: #13131f;
+            --bg2: #1c1c2e;
+            --bg3: #252540;
+            --surface: rgba(255,255,255,0.04);
+            --surface-hover: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.08);
+            --border-accent: rgba(180,140,255,0.3);
+            --gold: #c9a84c;
+            --gold-light: #e8c96a;
+            --purple: #7c5cbf;
+            --purple-light: #a07de0;
+            --teal: #3dbfb8;
+            --teal-light: #5ddbd4;
+            --red: #bf4c4c;
+            --red-light: #e07d7d;
+            --text1: #f0ece4;
+            --text2: #b8b0a0;
+            --text3: #706860;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.5);
+            --font-display: 'Cinzel', serif;
+            --font-body: 'Crimson Pro', serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg0);
+            color: var(--text1);
+            font-family: var(--font-body);
+            font-size: 17px;
+            line-height: 1.5;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Фоновая текстура */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                    radial-gradient(ellipse 80% 60% at 15% 10%, rgba(124,92,191,0.12) 0%, transparent 60%),
+                    radial-gradient(ellipse 60% 40% at 85% 80%, rgba(61,191,184,0.08) 0%, transparent 50%),
+                    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 60%);
+            pointer-events: none; z-index: 0;
+            animation: bgPulse 20s ease-in-out infinite alternate;
+        }
+        @keyframes bgPulse {
+            from { opacity: 1; }
+            to { opacity: 0.6; }
+        }
+
+        /* Орнамент-разделитель */
+        .ornament {
+            text-align: center;
+            color: var(--gold);
+            opacity: 0.4;
+            font-size: 1.1em;
+            letter-spacing: 0.5em;
+            margin: 8px 0;
+        }
+
+        /* ─── ШАПКА ─── */
+        .header {
+            position: relative; z-index: 1;
+            text-align: center;
+            padding: 56px 24px 40px;
+        }
+        .header-ornament {
+            font-family: var(--font-body);
+            font-style: italic;
+            color: var(--gold);
+            opacity: 0.6;
+            font-size: 0.9em;
+            letter-spacing: 0.3em;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-family: var(--font-display);
+            font-size: clamp(1.8em, 5vw, 3em);
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 40%, var(--purple-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            line-height: 1.1;
+        }
+        .header-sub {
+            font-family: var(--font-body);
+            font-style: italic;
+            color: var(--text3);
+            margin-top: 10px;
+            font-size: 1.05em;
+            letter-spacing: 0.05em;
+        }
+
+        /* ─── ПАНЕЛЬ УПРАВЛЕНИЯ ─── */
+        .controls {
+            position: relative; z-index: 100;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 0 24px 36px;
+        }
+
+        .btn {
+            font-family: var(--font-display);
+            font-size: 0.72em;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border: 1px solid var(--border-accent);
+            background: var(--surface);
+            color: var(--text1);
+            padding: 11px 22px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+            pointer-events: none;
+        }
+        .btn:hover {
+            background: var(--surface-hover);
+            border-color: rgba(201,168,76,0.5);
+            color: var(--gold-light);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+        .btn:active { transform: translateY(0); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(124,92,191,0.25), rgba(61,191,184,0.15));
+            border-color: rgba(160,125,224,0.4);
+        }
+        .btn-danger {
+            border-color: rgba(191,76,76,0.3);
+        }
+        .btn-danger:hover {
+            color: var(--red-light);
+            border-color: rgba(191,76,76,0.6);
+        }
+
+        .score-select {
+            font-family: var(--font-display);
+            font-size: 0.72em;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            background: var(--surface);
+            border: 1px solid var(--border-accent);
+            color: var(--text1);
+            padding: 11px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .score-select:hover { border-color: rgba(201,168,76,0.5); }
+        .score-select option { background: var(--bg2); }
+
+        /* Дропдаун экспорта */
+        .export-wrap { position: relative; }
+        .export-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 260px;
+            background: var(--bg2);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            overflow: hidden;
+            animation: menuIn 0.18s ease;
+        }
+        @keyframes menuIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .export-menu.open { display: block; }
+        .export-menu-title {
+            font-family: var(--font-display);
+            font-size: 0.65em;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gold);
+            padding: 10px 16px 8px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(201,168,76,0.05);
+        }
+        .export-item {
+            padding: 11px 16px;
+            color: var(--text2);
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 0.95em;
+            transition: all 0.15s;
+            border-bottom: 1px solid var(--border);
+        }
+        .export-item:last-child { border-bottom: none; }
+        .export-item:hover {
+            background: var(--surface-hover);
+            color: var(--text1);
+            padding-left: 22px;
+        }
+
+        /* ─── РЕДАКТОР МЕТОК ─── */
+        .labels-section {
+            position: relative; z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto 40px;
+            padding: 0 24px;
+        }
+        .section-heading {
+            font-family: var(--font-display);
+            font-size: 0.8em;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-heading::before,
+        .section-heading::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(201,168,76,0.3));
+        }
+        .section-heading::after {
+            background: linear-gradient(to left, transparent, rgba(201,168,76,0.3));
+        }
+
+        .labels-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .label-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .label-input {
+            font-family: var(--font-body);
+            font-size: 0.9em;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text1);
+            padding: 7px 12px;
+            border-radius: var(--radius-sm);
+            transition: border-color 0.15s;
+            width: 140px;
+            outline: none;
+        }
+        .label-input:focus {
+            border-color: var(--purple-light);
+            background: rgba(255,255,255,0.06);
+        }
+        .label-remove-btn {
+            background: none;
+            border: 1px solid rgba(191,76,76,0.25);
+            color: var(--red);
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1em;
+            line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .label-remove-btn:hover {
+            background: rgba(191,76,76,0.15);
+            border-color: var(--red);
+        }
+        .add-axis-btn {
+            font-family: var(--font-display);
+            font-size: 0.65em;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            background: none;
+            border: 1px dashed rgba(201,168,76,0.3);
+            color: var(--gold);
+            padding: 7px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .add-axis-btn:hover {
+            background: rgba(201,168,76,0.06);
+            border-color: rgba(201,168,76,0.6);
+        }
+        .add-axis-btn:disabled {
+            opacity: 0.3; cursor: not-allowed;
+        }
+
+        /* ─── СЕТКА КАРТОЧЕК ─── */
+        .cards-grid {
+            position: relative; z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px 40px;
+        }
+
+        /* Пустое состояние */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 24px;
+            border: 1px dashed rgba(201,168,76,0.2);
+            border-radius: var(--radius);
+            color: var(--text3);
+        }
+        .empty-state-icon { font-size: 3em; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 {
+            font-family: var(--font-display);
+            font-size: 0.9em;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text3);
+            margin-bottom: 8px;
+        }
+
+        /* ─── КАРТОЧКА ПЕРСОНАЖА ─── */
+        .card {
+            background: var(--bg1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+            transition: box-shadow 0.25s, transform 0.25s;
+            animation: cardIn 0.35s ease-out;
+        }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .card:hover {
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+            transform: translateY(-2px);
+        }
+        /* Полоска-акцент сверху */
+        .card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        }
+        .card.player-card::before {
+            background: linear-gradient(90deg, transparent, var(--teal), transparent);
+        }
+        .card.dm-card::before {
+            background: linear-gradient(90deg, transparent, var(--purple-light), transparent);
+        }
+        /* Боковая полоска */
+        .card.player-card { border-left: 3px solid rgba(61,191,184,0.5); }
+        .card.dm-card { border-left: 3px solid rgba(124,92,191,0.5); }
+
+        /* Заголовок карточки */
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        .role-badge {
+            font-family: var(--font-display);
+            font-size: 0.6em;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 5px 10px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .role-badge.player-badge {
+            background: rgba(61,191,184,0.15);
+            border: 1px solid rgba(61,191,184,0.35);
+            color: var(--teal-light);
+        }
+        .role-badge.dm-badge {
+            background: rgba(124,92,191,0.15);
+            border: 1px solid rgba(124,92,191,0.35);
+            color: var(--purple-light);
+        }
+        .name-input {
+            font-family: var(--font-display);
+            font-size: 1em;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid transparent;
+            color: var(--text1);
+            flex: 1;
+            padding: 2px 4px;
+            outline: none;
+            transition: border-color 0.15s;
+            min-width: 80px;
+        }
+        .name-input:focus {
+            border-bottom-color: var(--purple-light);
+        }
+
+        /* Индикатор суммы очков */
+        .score-badge {
+            font-family: var(--font-display);
+            font-size: 0.65em;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(201,168,76,0.08);
+            border: 1px solid rgba(201,168,76,0.2);
+            color: var(--gold);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* Кнопки действий в карточке */
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+        .card-action-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text3);
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.85em;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+        .card-action-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(201,168,76,0.08);
+        }
+        .card-action-btn.delete:hover {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(191,76,76,0.08);
+        }
+
+        /* Цветовой пикер */
+        .color-picker-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .color-dot {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.15s, border-color 0.15s;
+            flex-shrink: 0;
+        }
+        .color-dot:hover { transform: scale(1.2); }
+        .color-dot.active { border-color: white; transform: scale(1.15); }
+        .color-label {
+            font-size: 0.75em;
+            color: var(--text3);
+            font-family: var(--font-display);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-right: 4px;
+        }
+
+        /* Диаграмма */
+        .chart-wrap {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0;
+        }
+
+        /* Редактор характеристик */
+        .stats-editor { display: grid; gap: 10px; }
+        .stat-row {
+            display: grid;
+            grid-template-columns: 1fr 52px 1fr;
+            gap: 10px;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .stat-row:last-child { border-bottom: none; }
+
+        .stat-label-input {
+            font-family: var(--font-body);
+            font-size: 0.85em;
+            font-style: italic;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid transparent;
+            color: var(--text2);
+            padding: 3px 4px;
+            outline: none;
+            transition: border-color 0.15s;
+            width: 100%;
+        }
+        .stat-label-input:focus {
+            border-bottom-color: rgba(160,125,224,0.4);
+            color: var(--text1);
+        }
+        .stat-num-input {
+            font-family: var(--font-display);
+            font-size: 0.85em;
+            font-weight: 700;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text1);
+            padding: 5px 6px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            outline: none;
+            transition: border-color 0.15s;
+            width: 100%;
+        }
+        .stat-num-input:focus { border-color: var(--purple-light); }
+
+        .stat-slider {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--bg3);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+        .stat-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: var(--purple-light);
+            border: 2px solid white;
+            cursor: pointer;
+            transition: transform 0.15s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        .stat-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+        .stat-slider::-moz-range-thumb {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: var(--purple-light);
+            border: 2px solid white;
+            cursor: pointer;
+        }
+
+        /* ─── СРАВНЕНИЕ ─── */
+        .comparison {
+            position: relative; z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto 60px;
+            padding: 0 24px;
+        }
+        .comparison-inner {
+            background: var(--bg1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .comparison-inner::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            opacity: 0.4;
+        }
+        .comparison-title {
+            font-family: var(--font-display);
+            font-size: 1em;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text1);
+            margin-bottom: 20px;
+        }
+
+        .toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .toggle-chip {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s;
+            font-family: var(--font-body);
+            font-size: 0.9em;
+            color: var(--text2);
+        }
+        .toggle-chip:hover { background: var(--surface-hover); color: var(--text1); }
+        .toggle-chip input { accent-color: var(--purple-light); margin: 0; }
+
+        /* ─── АДАПТИВ ─── */
+        @media (max-width: 700px) {
+            .header { padding: 36px 16px 28px; }
+            .controls { padding: 0 16px 24px; gap: 8px; }
+            .btn, .score-select { font-size: 0.65em; padding: 9px 14px; }
+            .cards-grid { grid-template-columns: 1fr; padding: 0 16px 32px; }
+            .card { padding: 18px; }
+            .comparison { padding: 0 16px; }
+            .comparison-inner { padding: 24px 16px; }
+            .labels-section { padding: 0 16px; }
+            .stat-row { grid-template-columns: 1fr 44px 1fr; }
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg0); }
+        ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--purple); }
+
+        ::selection { background: rgba(124,92,191,0.35); color: var(--text1); }
+
+        /* Уведомление */
+        .toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            background: var(--bg2);
+            border: 1px solid var(--border-accent);
+            color: var(--text1);
+            font-family: var(--font-body);
+            font-size: 0.95em;
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            z-index: 9999;
+            animation: toastIn 0.25s ease;
+            max-width: 300px;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
+
 <div class="header">
-    <h1>⚔️ Интерактивные профили НРИ-команды ⚔️</h1>
-    <p>Настраивайте характеристики в реальном времени</p>
+    <div class="header-ornament">⸻ Letum non omnia finit ⸻</div>
+    <h1>⚔ RPG Team Profiler</h1>
+    <p class="header-sub">Визуализация характеристик вашей НРИ-команды</p>
 </div>
+
 <div class="controls">
-    <button class="control-btn" onclick="addPlayer()">➕ Добавить игрока</button>
-    <button class="control-btn" onclick="addDM()">🎭 Добавить ДМ</button>
-    <button class="control-btn" onclick="resetAll()">🔄 Сбросить все</button>
-    <button class="control-btn" onclick="saveTeamToURL()">Сохранить и поделиться</button>
-    <div class="score-system-select">
-        <select id="score-system" onchange="changeScoreSystem(this.value)">
-            <option value="0-10">0–10</option>
-            <option value="-5-5">−5…+5</option>
-        </select>
-    </div>
-    <div class="export-dropdown">
-        <button class="control-btn export-btn" onclick="toggleExportMenu()">💾 Экспорт PNG</button>
-        <div id="export-menu" class="export-menu">
-            <div class="export-option section-title">Индивидуальные профили</div>
+    <button class="btn btn-primary" onclick="addPlayer()">➕ Игрок</button>
+    <button class="btn btn-primary" onclick="addDM()">🎭 Мастер</button>
+    <button class="btn btn-danger" onclick="resetAll()">🔄 Сбросить</button>
+    <button class="btn" onclick="saveToURL()">🔗 Поделиться</button>
+    <select class="score-select" id="score-system" onchange="changeScoreSystem(this.value)">
+        <option value="0-10">0 – 10</option>
+        <option value="-5-5">−5 … +5</option>
+    </select>
+    <div class="export-wrap">
+        <button class="btn" onclick="toggleExportMenu(event)">💾 Экспорт PNG ▾</button>
+        <div class="export-menu" id="export-menu">
+            <div class="export-menu-title">Индивидуальные</div>
             <div id="individual-exports"></div>
-            <div class="export-option section-title">Командные профили</div>
-            <div class="export-option" onclick="exportComparison()">📊 Сравнительный анализ команды</div>
-            <div class="export-option" onclick="exportAllCharts()">📦 Все диаграммы (архив)</div>
+            <div class="export-menu-title">Командные</div>
+            <div class="export-item" onclick="exportComparison()">📊 Сравнительная диаграмма</div>
+            <div class="export-item" onclick="exportAllCharts()">📦 Все (ZIP-архив)</div>
         </div>
     </div>
 </div>
-<div class="stats-labels-editor">
-    <h3>Редактор меток характеристик</h3>
-    <div id="labels-editor" class="labels-grid"></div>
+
+<div class="labels-section">
+    <div class="section-heading">Оси характеристик</div>
+    <div class="labels-grid" id="labels-grid"></div>
 </div>
-<div id="charts-container" class="charts-grid"></div>
-<div id="comparison-section" class="comparison-section">
-    <h2 class="comparison-title">📊 Сравнительный анализ команды</h2>
-    <div id="character-toggles" class="character-toggle-container"></div>
-    <div class="chart-canvas">
-        <div class="radar-chart" id="comparison-chart"></div>
+
+<div class="cards-grid" id="cards-grid"></div>
+
+<div class="comparison">
+    <div class="comparison-inner">
+        <div class="comparison-title">📊 Сравнение команды</div>
+        <div class="toggles" id="char-toggles"></div>
+        <div style="display:flex;justify-content:center;">
+            <div id="comparison-chart" style="width:400px;height:400px;"></div>
+        </div>
     </div>
 </div>
-<script src="js/script.js"></script>
+
+<script>
+    // ══════════════════════════════════════
+    //  КОНСТАНТЫ
+    // ══════════════════════════════════════
+    const PALETTE = [
+        { bg: 'rgba(61,191,184,0.25)',  border: '#3dbfb8' },
+        { bg: 'rgba(191,76,76,0.25)',   border: '#bf4c4c' },
+        { bg: 'rgba(124,92,191,0.25)', border: '#7c5cbf' },
+        { bg: 'rgba(201,168,76,0.25)', border: '#c9a84c' },
+        { bg: 'rgba(76,191,119,0.25)', border: '#4cbf77' },
+        { bg: 'rgba(191,130,76,0.25)', border: '#bf824c' },
+        { bg: 'rgba(76,130,191,0.25)', border: '#4c82bf' },
+        { bg: 'rgba(191,76,160,0.25)', border: '#bf4ca0' },
+    ];
+    const MAX_AXES = 8;
+    const MIN_AXES = 3;
+    const STORAGE_KEY = 'rpg-profiler-v2';
+
+    // ══════════════════════════════════════
+    //  СОСТОЯНИЕ
+    // ══════════════════════════════════════
+    let state = {
+        characters: [],
+        axes: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
+        scoreSystem: '0-10',
+        nextId: 1,
+        visibleIds: new Set(),
+    };
+
+    // Экземпляры Chart.js
+    const charts = {};          // { id: Chart }
+    let compChart = null;
+
+    // ══════════════════════════════════════
+    //  СОХРАНЕНИЕ / ЗАГРУЗКА
+    // ══════════════════════════════════════
+    function saveToStorage() {
+        const data = {
+            characters: state.characters,
+            axes: state.axes,
+            scoreSystem: state.scoreSystem,
+            nextId: state.nextId,
+            visibleIds: [...state.visibleIds],
+        };
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+    }
+
+    function loadFromStorage() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return false;
+            const data = JSON.parse(raw);
+            state.characters = data.characters || [];
+            state.axes = data.axes || state.axes;
+            state.scoreSystem = data.scoreSystem || '0-10';
+            state.nextId = data.nextId || state.characters.length + 1;
+            state.visibleIds = new Set(data.visibleIds || state.characters.map(c => c.id));
+            return true;
+        } catch { return false; }
+    }
+
+    // ══════════════════════════════════════
+    //  ВСПОМОГАТЕЛЬНЫЕ
+    // ══════════════════════════════════════
+    function getMinMax() {
+        return state.scoreSystem === '0-10'
+            ? { min: 0, max: 10 }
+            : { min: -5, max: 5 };
+    }
+
+    function clamp(v, min, max) {
+        return Math.max(min, Math.min(max, v));
+    }
+
+    function getColor(index) {
+        return PALETTE[index % PALETTE.length];
+    }
+
+    function defaultStats() {
+        const { min, max } = getMinMax();
+        const mid = Math.round((min + max) / 2);
+        return state.axes.map(() => mid);
+    }
+
+    function randomStats() {
+        const { min, max } = getMinMax();
+        return state.axes.map(() => Math.round(min + Math.random() * (max - min)));
+    }
+
+    function scoreSum(stats) {
+        return stats.reduce((a, b) => a + b, 0);
+    }
+
+    function toast(msg) {
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2800);
+    }
+
+    // ══════════════════════════════════════
+    //  ДОБАВЛЕНИЕ / УДАЛЕНИЕ ПЕРСОНАЖЕЙ
+    // ══════════════════════════════════════
+    function addPlayer() {
+        const color = getColor(state.characters.filter(c => c.role === 'player').length);
+        const ch = {
+            id: state.nextId++,
+            name: 'Новый игрок',
+            role: 'player',
+            stats: defaultStats(),
+            color,
+        };
+        state.characters.push(ch);
+        state.visibleIds.add(ch.id);
+        renderCard(ch);
+        updateCompChart();
+        updateToggles();
+        updateExportMenu();
+        saveToStorage();
+    }
+
+    function addDM() {
+        const color = PALETTE[6]; // синий тон для ДМ
+        const ch = {
+            id: state.nextId++,
+            name: 'Мастер',
+            role: 'dm',
+            stats: defaultStats(),
+            color,
+        };
+        state.characters.push(ch);
+        state.visibleIds.add(ch.id);
+        renderCard(ch);
+        updateCompChart();
+        updateToggles();
+        updateExportMenu();
+        saveToStorage();
+    }
+
+    function deleteCharacter(id) {
+        if (!confirm('Удалить персонажа?')) return;
+        state.characters = state.characters.filter(c => c.id !== id);
+        state.visibleIds.delete(id);
+        if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+        const card = document.getElementById(`card-${id}`);
+        if (card) card.remove();
+        showEmptyIfNeeded();
+        updateCompChart();
+        updateToggles();
+        updateExportMenu();
+        saveToStorage();
+    }
+
+    function showEmptyIfNeeded() {
+        const grid = document.getElementById('cards-grid');
+        const existing = grid.querySelector('.empty-state');
+        if (state.characters.length === 0 && !existing) {
+            grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">⚔️</div>
+        <h3>Команда пуста</h3>
+        <p>Добавьте игроков или мастера выше</p>
+      </div>`;
+        } else if (state.characters.length > 0 && existing) {
+            existing.remove();
+        }
+    }
+
+    // ══════════════════════════════════════
+    //  РЕНДЕР КАРТОЧКИ
+    // ══════════════════════════════════════
+    function renderCard(ch) {
+        const grid = document.getElementById('cards-grid');
+        // Убрать пустое состояние
+        const empty = grid.querySelector('.empty-state');
+        if (empty) empty.remove();
+
+        const { min, max } = getMinMax();
+        const sum = scoreSum(ch.stats);
+        const maxPossible = max * state.axes.length;
+
+        const card = document.createElement('div');
+        card.className = `card ${ch.role}-card`;
+        card.id = `card-${ch.id}`;
+
+        card.innerHTML = `
+    <div class="card-header">
+      <span class="role-badge ${ch.role}-badge">${ch.role === 'dm' ? '🎭 Мастер' : '🎲 Игрок'}</span>
+      <input class="name-input" type="text" value="${escHtml(ch.name)}"
+        onchange="updateName(${ch.id}, this.value)">
+      <span class="score-badge" id="score-badge-${ch.id}">Σ ${sum} / ${maxPossible}</span>
+      <div class="card-actions">
+        <button class="card-action-btn" title="Рандомизировать" onclick="randomizeChar(${ch.id})">🎲</button>
+        <button class="card-action-btn delete" title="Удалить" onclick="deleteCharacter(${ch.id})">✕</button>
+      </div>
+    </div>
+
+    <div class="color-picker-wrap" id="color-picker-${ch.id}">
+      <span class="color-label">Цвет:</span>
+      ${PALETTE.map((p, i) => `
+        <div class="color-dot ${p.border === ch.color.border ? 'active' : ''}"
+          style="background:${p.border};"
+          onclick="updateColor(${ch.id}, ${i})"
+          title="${p.border}"></div>
+      `).join('')}
+    </div>
+
+    <div class="chart-wrap">
+      <div id="chart-${ch.id}" style="width:340px;height:340px;"></div>
+    </div>
+
+    <div class="stats-editor" id="stats-editor-${ch.id}">
+      ${renderStatRows(ch)}
+    </div>
+  `;
+
+        grid.appendChild(card);
+        drawChart(ch);
+    }
+
+    function renderStatRows(ch) {
+        const { min, max } = getMinMax();
+        return ch.stats.map((val, i) => `
+    <div class="stat-row">
+      <input class="stat-label-input" type="text" value="${escHtml(state.axes[i])}"
+        placeholder="Ось ${i+1}"
+        onchange="updateAxis(${i}, this.value)">
+      <input class="stat-num-input" type="number" min="${min}" max="${max}" value="${val}"
+        onchange="updateStat(${ch.id}, ${i}, +this.value)"
+        oninput="syncSlider(${ch.id}, ${i}, +this.value)">
+      <input class="stat-slider" type="range" min="${min}" max="${max}" value="${val}"
+        oninput="updateStat(${ch.id}, ${i}, +this.value)">
+    </div>
+  `).join('');
+    }
+
+    function rebuildStatRows(ch) {
+        const editor = document.getElementById(`stats-editor-${ch.id}`);
+        if (editor) editor.innerHTML = renderStatRows(ch);
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ══════════════════════════════════════
+    //  ОБНОВЛЕНИЕ СОСТОЯНИЯ
+    // ══════════════════════════════════════
+    function updateName(id, value) {
+        const ch = state.characters.find(c => c.id === id);
+        if (!ch) return;
+        ch.name = value.trim() || 'Без имени';
+        if (charts[id]) {
+            charts[id].data.datasets[0].label = ch.name;
+            charts[id].update();
+        }
+        updateCompChart();
+        updateToggles();
+        updateExportMenu();
+        saveToStorage();
+    }
+
+    function updateColor(id, paletteIndex) {
+        const ch = state.characters.find(c => c.id === id);
+        if (!ch) return;
+        ch.color = PALETTE[paletteIndex];
+        // Обновить активный цвет-дот
+        const wrap = document.getElementById(`color-picker-${id}`);
+        if (wrap) {
+            wrap.querySelectorAll('.color-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === paletteIndex);
+            });
+        }
+        redrawChart(ch);
+        updateCompChart();
+        saveToStorage();
+    }
+
+    function updateStat(id, idx, rawVal) {
+        const { min, max } = getMinMax();
+        const val = clamp(isNaN(rawVal) ? 0 : rawVal, min, max);
+        const ch = state.characters.find(c => c.id === id);
+        if (!ch) return;
+        ch.stats[idx] = val;
+        // Синхронизировать поля ввода
+        const editor = document.getElementById(`stats-editor-${id}`);
+        if (editor) {
+            const rows = editor.querySelectorAll('.stat-row');
+            if (rows[idx]) {
+                rows[idx].querySelector('.stat-num-input').value = val;
+                rows[idx].querySelector('.stat-slider').value = val;
+            }
+        }
+        // Обновить значок суммы
+        const badge = document.getElementById(`score-badge-${id}`);
+        if (badge) {
+            const maxP = max * state.axes.length;
+            badge.textContent = `Σ ${scoreSum(ch.stats)} / ${maxP}`;
+        }
+        // Обновить диаграмму
+        if (charts[id]) {
+            charts[id].data.datasets[0].data = [...ch.stats];
+            charts[id].update();
+        }
+        updateCompChart();
+        saveToStorage();
+    }
+
+    function syncSlider(id, idx, val) {
+        // Вызывается из number-input, синхронизирует слайдер
+        updateStat(id, idx, val);
+    }
+
+    function updateAxis(axisIdx, value) {
+        state.axes[axisIdx] = value.trim() || `Ось ${axisIdx + 1}`;
+        // Обновить метки на всех диаграммах
+        Object.entries(charts).forEach(([id, chart]) => {
+            chart.data.labels = [...state.axes];
+            chart.update();
+        });
+        if (compChart) {
+            compChart.data.labels = [...state.axes];
+            compChart.update();
+        }
+        // Синхронизировать заголовки глобального редактора и карточек
+        syncAllAxisLabels();
+        renderLabelsEditor();
+        saveToStorage();
+    }
+
+    function syncAllAxisLabels() {
+        // Синхронизировать input'ы внутри карточек с state.axes
+        state.characters.forEach(ch => {
+            const editor = document.getElementById(`stats-editor-${ch.id}`);
+            if (!editor) return;
+            editor.querySelectorAll('.stat-label-input').forEach((inp, i) => {
+                if (i < state.axes.length) inp.value = state.axes[i];
+            });
+        });
+    }
+
+    function randomizeChar(id) {
+        const ch = state.characters.find(c => c.id === id);
+        if (!ch) return;
+        ch.stats = randomStats();
+        rebuildStatRows(ch);
+        redrawChart(ch);
+        updateCompChart();
+        const { max } = getMinMax();
+        const badge = document.getElementById(`score-badge-${id}`);
+        if (badge) badge.textContent = `Σ ${scoreSum(ch.stats)} / ${max * state.axes.length}`;
+        saveToStorage();
+    }
+
+    // ══════════════════════════════════════
+    //  ДИАГРАММЫ
+    // ══════════════════════════════════════
+    function chartOptions() {
+        const { min, max } = getMinMax();
+        return {
+            responsive: false,
+            animation: { duration: 500, easing: 'easeOutCubic' },
+            scales: {
+                r: {
+                    beginAtZero: state.scoreSystem === '0-10',
+                    min, max,
+                    ticks: {
+                        stepSize: 2,
+                        backdropColor: 'transparent',
+                        color: 'rgba(255,255,255,0.45)',
+                        font: { size: 10 },
+                    },
+                    pointLabels: {
+                        font: { size: 11, weight: 'bold', family: "'Crimson Pro', serif" },
+                        color: '#e0d8cc',
+                    },
+                    grid: { color: 'rgba(255,255,255,0.08)' },
+                    angleLines: { color: 'rgba(255,255,255,0.06)' },
+                }
+            },
+            plugins: { legend: { display: false } },
+        };
+    }
+
+    function drawChart(ch) {
+        const container = document.getElementById(`chart-${ch.id}`);
+        if (!container) return;
+        if (charts[ch.id]) { charts[ch.id].destroy(); delete charts[ch.id]; }
+        const canvas = document.createElement('canvas');
+        canvas.width = 340; canvas.height = 340;
+        container.innerHTML = '';
+        container.appendChild(canvas);
+        charts[ch.id] = new Chart(canvas.getContext('2d'), {
+            type: 'radar',
+            data: {
+                labels: [...state.axes],
+                datasets: [{
+                    label: ch.name,
+                    data: [...ch.stats],
+                    backgroundColor: ch.color.bg,
+                    borderColor: ch.color.border,
+                    borderWidth: 2,
+                    pointBackgroundColor: ch.color.border,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                }]
+            },
+            options: chartOptions(),
+        });
+    }
+
+    function redrawChart(ch) {
+        drawChart(ch);
+    }
+
+    function updateCompChart() {
+        const container = document.getElementById('comparison-chart');
+        if (!container) return;
+        const { min, max } = getMinMax();
+        const visible = state.characters.filter(c => state.visibleIds.has(c.id));
+
+        if (compChart) {
+            compChart.data.labels = [...state.axes];
+            compChart.data.datasets = visible.map(c => ({
+                label: (c.role === 'dm' ? '🎭 ' : '🎲 ') + c.name,
+                data: [...c.stats],
+                backgroundColor: c.color.bg,
+                borderColor: c.color.border,
+                borderWidth: 2,
+                pointBackgroundColor: c.color.border,
+                pointBorderColor: '#fff',
+                pointRadius: 4,
+            }));
+            compChart.options.scales.r.min = min;
+            compChart.options.scales.r.max = max;
+            compChart.options.scales.r.beginAtZero = state.scoreSystem === '0-10';
+            compChart.update();
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 400; canvas.height = 400;
+        container.innerHTML = '';
+        container.appendChild(canvas);
+
+        compChart = new Chart(canvas.getContext('2d'), {
+            type: 'radar',
+            data: {
+                labels: [...state.axes],
+                datasets: visible.map(c => ({
+                    label: (c.role === 'dm' ? '🎭 ' : '🎲 ') + c.name,
+                    data: [...c.stats],
+                    backgroundColor: c.color.bg,
+                    borderColor: c.color.border,
+                    borderWidth: 2,
+                    pointBackgroundColor: c.color.border,
+                    pointBorderColor: '#fff',
+                    pointRadius: 4,
+                }))
+            },
+            options: {
+                ...chartOptions(),
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            color: '#b8b0a0',
+                            font: { size: 12, family: "'Crimson Pro', serif" },
+                            padding: 16,
+                            usePointStyle: true,
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ══════════════════════════════════════
+    //  ОСИ (РЕДАКТОР МЕТОК)
+    // ══════════════════════════════════════
+    function renderLabelsEditor() {
+        const grid = document.getElementById('labels-grid');
+        grid.innerHTML = '';
+
+        state.axes.forEach((label, i) => {
+            const item = document.createElement('div');
+            item.className = 'label-item';
+            item.innerHTML = `
+      <input class="label-input" type="text" value="${escHtml(label)}"
+        placeholder="Ось ${i+1}"
+        onchange="updateAxis(${i}, this.value)">
+      ${state.axes.length > MIN_AXES
+                ? `<button class="label-remove-btn" onclick="removeAxis(${i})" title="Удалить ось">−</button>`
+                : ''}
+    `;
+            grid.appendChild(item);
+        });
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-axis-btn';
+        addBtn.textContent = '+ Добавить ось';
+        addBtn.disabled = state.axes.length >= MAX_AXES;
+        addBtn.onclick = addAxis;
+        grid.appendChild(addBtn);
+    }
+
+    function addAxis() {
+        if (state.axes.length >= MAX_AXES) return;
+        const { min, max } = getMinMax();
+        const mid = Math.round((min + max) / 2);
+        state.axes.push(`Характеристика ${state.axes.length + 1}`);
+        state.characters.forEach(ch => { ch.stats.push(mid); });
+        renderLabelsEditor();
+        // Перестроить карточки
+        state.characters.forEach(ch => {
+            rebuildStatRows(ch);
+            redrawChart(ch);
+            const badge = document.getElementById(`score-badge-${ch.id}`);
+            if (badge) badge.textContent = `Σ ${scoreSum(ch.stats)} / ${max * state.axes.length}`;
+        });
+        updateCompChart();
+        saveToStorage();
+    }
+
+    function removeAxis(idx) {
+        if (state.axes.length <= MIN_AXES) return;
+        state.axes.splice(idx, 1);
+        state.characters.forEach(ch => { ch.stats.splice(idx, 1); });
+        renderLabelsEditor();
+        const { max } = getMinMax();
+        state.characters.forEach(ch => {
+            rebuildStatRows(ch);
+            redrawChart(ch);
+            const badge = document.getElementById(`score-badge-${ch.id}`);
+            if (badge) badge.textContent = `Σ ${scoreSum(ch.stats)} / ${max * state.axes.length}`;
+        });
+        updateCompChart();
+        saveToStorage();
+    }
+
+    // ══════════════════════════════════════
+    //  ПЕРЕКЛЮЧАТЕЛИ ВИДИМОСТИ
+    // ══════════════════════════════════════
+    function updateToggles() {
+        const container = document.getElementById('char-toggles');
+        container.innerHTML = '';
+        state.characters.forEach(ch => {
+            const chip = document.createElement('label');
+            chip.className = 'toggle-chip';
+            chip.innerHTML = `
+      <input type="checkbox" ${state.visibleIds.has(ch.id) ? 'checked' : ''}
+        onchange="toggleVisibility(${ch.id}, this.checked)">
+      <span style="width:10px;height:10px;border-radius:50%;background:${ch.color.border};display:inline-block;"></span>
+      ${escHtml((ch.role === 'dm' ? '🎭 ' : '🎲 ') + ch.name)}
+    `;
+            container.appendChild(chip);
+        });
+    }
+
+    function toggleVisibility(id, visible) {
+        visible ? state.visibleIds.add(id) : state.visibleIds.delete(id);
+        updateCompChart();
+        saveToStorage();
+    }
+
+    // ══════════════════════════════════════
+    //  СИСТЕМА ОЦЕНОК
+    // ══════════════════════════════════════
+    function changeScoreSystem(newSys) {
+        if (newSys === state.scoreSystem) return;
+        const oldSys = state.scoreSystem;
+        state.scoreSystem = newSys;
+
+        state.characters.forEach(ch => {
+            ch.stats = ch.stats.map(v => {
+                if (oldSys === '0-10' && newSys === '-5-5') return v - 5;
+                if (oldSys === '-5-5' && newSys === '0-10') return v + 5;
+                return v;
+            });
+            rebuildStatRows(ch);
+            redrawChart(ch);
+            const { max } = getMinMax();
+            const badge = document.getElementById(`score-badge-${ch.id}`);
+            if (badge) badge.textContent = `Σ ${scoreSum(ch.stats)} / ${max * state.axes.length}`;
+        });
+        updateCompChart();
+        saveToStorage();
+    }
+
+    // ══════════════════════════════════════
+    //  ЭКСПОРТ  (общий хелпер)
+    // ══════════════════════════════════════
+    async function captureElement(el) {
+        return html2canvas(el, { backgroundColor: null, scale: 2, useCORS: true, logging: false });
+    }
+
+    async function exportCardById(id) {
+        const card = document.getElementById(`card-${id}`);
+        if (!card) return null;
+        // Временно скрыть кнопки действий
+        const actions = card.querySelector('.card-actions');
+        if (actions) actions.style.display = 'none';
+        const canvas = await captureElement(card);
+        if (actions) actions.style.display = '';
+        return canvas;
+    }
+
+    async function exportCharacterChart(id) {
+        const ch = state.characters.find(c => c.id === id);
+        if (!ch) return;
+        const canvas = await exportCardById(id);
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = `${ch.name}_profile.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        document.getElementById('export-menu').classList.remove('open');
+    }
+
+    async function exportComparison() {
+        const el = document.querySelector('.comparison-inner');
+        const toggles = document.getElementById('char-toggles');
+        toggles.style.display = 'none';
+        const canvas = await captureElement(el);
+        toggles.style.display = '';
+        const link = document.createElement('a');
+        link.download = 'team_comparison.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        document.getElementById('export-menu').classList.remove('open');
+    }
+
+    async function exportAllCharts() {
+        document.getElementById('export-menu').classList.remove('open');
+        const zip = new JSZip();
+        toast('Подготовка архива…');
+
+        for (const ch of state.characters) {
+            const canvas = await exportCardById(ch.id);
+            if (canvas) {
+                const data = canvas.toDataURL('image/png').split(',')[1];
+                zip.file(`${ch.name}_profile.png`, data, { base64: true });
+            }
+        }
+
+        // Сравнение
+        const el = document.querySelector('.comparison-inner');
+        const toggles = document.getElementById('char-toggles');
+        toggles.style.display = 'none';
+        const compCanvas = await captureElement(el);
+        toggles.style.display = '';
+        const compData = compCanvas.toDataURL('image/png').split(',')[1];
+        zip.file('team_comparison.png', compData, { base64: true });
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        saveAs(blob, 'rpg_profiles.zip');
+    }
+
+    function updateExportMenu() {
+        const container = document.getElementById('individual-exports');
+        container.innerHTML = '';
+        state.characters.forEach(ch => {
+            const item = document.createElement('div');
+            item.className = 'export-item';
+            item.innerHTML = `${ch.role === 'dm' ? '🎭' : '🎲'} ${escHtml(ch.name)}`;
+            item.onclick = () => exportCharacterChart(ch.id);
+            container.appendChild(item);
+        });
+    }
+
+    // ══════════════════════════════════════
+    //  ПОДЕЛИТЬСЯ / URL
+    // ══════════════════════════════════════
+    function saveToURL() {
+        const data = JSON.stringify({
+            characters: state.characters,
+            axes: state.axes,
+            scoreSystem: state.scoreSystem,
+            nextId: state.nextId,
+        });
+        const compressed = pako.gzip(data);
+        const b64 = btoa(String.fromCharCode(...compressed));
+        const url = `${location.origin}${location.pathname}?team=${encodeURIComponent(b64)}`;
+        navigator.clipboard.writeText(url)
+            .then(() => toast('✅ Ссылка скопирована!'))
+            .catch(() => { prompt('Скопируйте ссылку:', url); });
+    }
+
+    function loadFromURL() {
+        const param = new URLSearchParams(location.search).get('team');
+        if (!param) return false;
+        try {
+            const bytes = new Uint8Array([...atob(decodeURIComponent(param))].map(c => c.charCodeAt(0)));
+            const json = pako.ungzip(bytes, { to: 'string' });
+            const data = JSON.parse(json);
+            state.characters = data.characters || [];
+            state.axes = data.axes || state.axes;
+            state.scoreSystem = data.scoreSystem || '0-10';
+            state.nextId = data.nextId || state.characters.length + 1;
+            state.visibleIds = new Set(state.characters.map(c => c.id));
+            return true;
+        } catch (e) {
+            console.error('URL load error:', e);
+            toast('❌ Не удалось загрузить данные из ссылки');
+            return false;
+        }
+    }
+
+    // ══════════════════════════════════════
+    //  СБРОС
+    // ══════════════════════════════════════
+    function resetAll() {
+        if (!confirm('Сбросить все данные команды?')) return;
+        Object.values(charts).forEach(c => c.destroy());
+        Object.keys(charts).forEach(k => delete charts[k]);
+        if (compChart) { compChart.destroy(); compChart = null; }
+
+        state.characters = [];
+        state.axes = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
+        state.scoreSystem = '0-10';
+        state.nextId = 1;
+        state.visibleIds = new Set();
+
+        document.getElementById('score-system').value = '0-10';
+        document.getElementById('cards-grid').innerHTML = '';
+        document.getElementById('comparison-chart').innerHTML = '';
+        document.getElementById('char-toggles').innerHTML = '';
+        localStorage.removeItem(STORAGE_KEY);
+
+        renderLabelsEditor();
+        showEmptyIfNeeded();
+        updateExportMenu();
+        history.replaceState({}, '', location.pathname);
+        toast('Данные сброшены');
+    }
+
+    // ══════════════════════════════════════
+    //  МЕНЮ ЭКСПОРТА
+    // ══════════════════════════════════════
+    function toggleExportMenu(e) {
+        e.stopPropagation();
+        document.getElementById('export-menu').classList.toggle('open');
+    }
+
+    document.addEventListener('click', () => {
+        document.getElementById('export-menu').classList.remove('open');
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') document.getElementById('export-menu').classList.remove('open');
+    });
+
+    // ══════════════════════════════════════
+    //  ИНИЦИАЛИЗАЦИЯ
+    // ══════════════════════════════════════
+    function init() {
+        let loaded = false;
+
+        // Сначала URL, потом localStorage
+        if (location.search.includes('team=')) {
+            loaded = loadFromURL();
+        }
+        if (!loaded) {
+            loaded = loadFromStorage();
+        }
+
+        // Данные по умолчанию
+        if (!loaded) {
+            state.characters = [
+                { id:1, name:'Сергей',  role:'player', stats:[8,2,6,7,6], color: PALETTE[0] },
+                { id:2, name:'Дима',    role:'player', stats:[8,3,7,8,8], color: PALETTE[1] },
+                { id:3, name:'Витя',    role:'player', stats:[6,7,4,7,2], color: PALETTE[2] },
+                { id:4, name:'Денис',   role:'player', stats:[2,2,8,2,7], color: PALETTE[3] },
+                { id:5, name:'Настя',   role:'dm',     stats:[8,8,3,9,3], color: PALETTE[6] },
+            ];
+            state.nextId = 6;
+            state.visibleIds = new Set([1,2,3,4,5]);
+        }
+
+        document.getElementById('score-system').value = state.scoreSystem;
+
+        renderLabelsEditor();
+
+        state.characters.forEach(ch => renderCard(ch));
+
+        if (state.characters.length === 0) showEmptyIfNeeded();
+
+        updateToggles();
+        updateCompChart();
+        updateExportMenu();
+        saveToStorage();
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
