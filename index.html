@@ -626,6 +626,45 @@
             margin-bottom: 20px;
         }
 
+        .team-score-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .team-score-badge {
+            font-family: var(--font-display);
+            font-size: 0.72em;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            padding: 6px 16px;
+            border-radius: 14px;
+            background: rgba(201,168,76,0.08);
+            border: 1px solid rgba(201,168,76,0.25);
+            color: var(--gold);
+            white-space: nowrap;
+        }
+        .team-score-badge.perfect {
+            background: rgba(201,168,76,0.18);
+            border-color: rgba(201,168,76,0.6);
+            color: var(--gold-light);
+            box-shadow: 0 0 12px rgba(201,168,76,0.2);
+        }
+        .team-weak-badge {
+            font-family: var(--font-display);
+            font-size: 0.68em;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            padding: 6px 14px;
+            border-radius: 14px;
+            background: rgba(191,76,76,0.08);
+            border: 1px solid rgba(191,76,76,0.2);
+            color: var(--red-light);
+            white-space: nowrap;
+        }
+
         .toggles {
             display: flex;
             flex-wrap: wrap;
@@ -733,6 +772,7 @@
 <div class="comparison">
     <div class="comparison-inner">
         <div class="comparison-title">📊 Сравнение команды</div>
+        <div class="team-score-row" id="team-score-row"></div>
         <div class="toggles" id="char-toggles"></div>
         <div style="display:flex;justify-content:center;">
             <div id="comparison-chart" style="width:400px;height:400px;"></div>
@@ -1157,6 +1197,37 @@
         drawChart(ch);
     }
 
+    function updateTeamScore() {
+        const row = document.getElementById('team-score-row');
+        if (!row) return;
+
+        const visible = state.characters.filter(c => state.visibleIds.has(c.id));
+        const { max } = getMinMax();
+        const maxPossible = max * state.axes.length;
+
+        if (visible.length === 0) {
+            row.innerHTML = '';
+            return;
+        }
+
+        const axisMaxes = state.axes.map((_, i) =>
+            Math.max(...visible.map(c => c.stats[i] ?? 0))
+        );
+        const teamScore = axisMaxes.reduce((a, b) => a + b, 0);
+        const isPerfect = teamScore >= maxPossible;
+
+        const weakIdx = axisMaxes.indexOf(Math.min(...axisMaxes));
+        const weakLabel = state.axes[weakIdx];
+        const weakVal = axisMaxes[weakIdx];
+
+        row.innerHTML = `
+    <span class="team-score-badge${isPerfect ? ' perfect' : ''}">
+      ${isPerfect ? '✦ ' : ''}Команда: ${teamScore} / ${maxPossible}
+    </span>
+    ${!isPerfect ? `<span class="team-weak-badge">⚠ Слабое место: ${weakLabel} (${weakVal})</span>` : ''}
+  `;
+    }
+
     function updateCompChart() {
         const container = document.getElementById('comparison-chart');
         if (!container) return;
@@ -1179,6 +1250,7 @@
             compChart.options.scales.r.max = max;
             compChart.options.scales.r.beginAtZero = state.scoreSystem === '0-10';
             compChart.update();
+            updateTeamScore();
             return;
         }
 
@@ -1218,6 +1290,7 @@
                 }
             }
         });
+        updateTeamScore();
     }
 
     // ══════════════════════════════════════
