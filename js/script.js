@@ -1,1048 +1,559 @@
-let characters = [
-    {
-        id: 1,
-        name: 'Сергей',
-        role: 'player',
-        stats: [8, 2, 6, 7, 6],
-        statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(163,138,255,0.3)', border: '#6228d6'}
-    },
-    {
-        id: 2,
-        name: 'Дима',
-        role: 'player',
-        stats: [8, 3, 7, 8, 8],
-        statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'}
-    },
-    {
-        id: 3,
-        name: 'Витя',
-        role: 'player',
-        stats: [6, 7, 4, 7, 2],
-        statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'}
-    },
-    {
-        id: 4,
-        name: 'Денис',
-        role: 'player',
-        stats: [2, 2, 8, 2, 7],
-        statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'}
-    },
-    {
-        id: 5,
-        name: 'Настя',
-        role: 'dm',
-        stats: [8, 8, 3, 9, 3],
-        statsLabels: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
-        color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
-    }
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+
+/* ─── persistence ─── */
+const STORAGE_KEY = "rpg-profiler-v3";
+const load = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) } catch { return null } };
+const persist = (s) => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)) } catch {} };
+
+/* ─── palette ─── */
+const PALETTE = [
+    { id: "crimson",  hex: "#E24B4A", bg: "rgba(226,75,74,0.18)" },
+    { id: "emerald",  hex: "#1D9E75", bg: "rgba(29,158,117,0.18)" },
+    { id: "sapphire", hex: "#378ADD", bg: "rgba(55,138,221,0.18)" },
+    { id: "violet",   hex: "#7F77DD", bg: "rgba(127,119,221,0.18)" },
+    { id: "amber",    hex: "#D88A30", bg: "rgba(216,138,48,0.18)" },
+    { id: "rose",     hex: "#D4537E", bg: "rgba(212,83,126,0.18)" },
+    { id: "teal",     hex: "#45B7D1", bg: "rgba(69,183,209,0.18)" },
+    { id: "indigo",   hex: "#6228D6", bg: "rgba(98,40,214,0.18)" },
+];
+const getColor = (id) => PALETTE.find(p => p.id === id) || PALETTE[0];
+
+/* ─── defaults ─── */
+const DEFAULT_LABELS = ["Ролеплей", "Импровизация", "Правила", "Социальность", "Тактика"];
+const DEFAULT_CHARS = [
+    { id: "c1", name: "Сергей",  role: "player", stats: [8,2,6,7,6], colorId: "indigo" },
+    { id: "c2", name: "Дима",    role: "player", stats: [8,3,7,8,8], colorId: "crimson" },
+    { id: "c3", name: "Витя",    role: "player", stats: [6,7,4,7,2], colorId: "emerald" },
+    { id: "c4", name: "Денис",   role: "player", stats: [2,2,8,2,7], colorId: "sapphire" },
+    { id: "c5", name: "Настя",   role: "dm",     stats: [8,8,3,9,3], colorId: "violet" },
 ];
 
-let globalStatLabels = [
-    'Ролеплей/Нарратив',
-    'Импровизация',
-    'Знание правил',
-    'Социальность/Справедливость',
-    'Тактика/Подготовка'
-];
+const uid = () => "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 
-let globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
+/* ─── undo system ─── */
+const MAX_UNDO = 40;
 
-const statDescriptions = {
-    'Ролеплей': 'Способность глубоко вживаться в роль персонажа, создавая убедительную историю.',
-    'Импровизация': 'Умение быстро реагировать и придумывать решения в неожиданных ситуациях.',
-    'Правила': 'Знание игровой механики и правил системы настольной ролевой игры.',
-    'Социальность': 'Навыки взаимодействия с другими игроками, поддержание атмосферы и справедливости.',
-    'Тактика': 'Умение планировать действия и эффективно использовать игровые ресурсы.'
-};
+function useUndoable(init) {
+    const [state, setState] = useState(init);
+    const history = useRef([init]);
+    const idx = useRef(0);
 
-const playerColors = [
-    {background: 'rgba(255, 107, 107, 0.3)', border: '#ff6b6b'},
-    {background: 'rgba(78, 205, 196, 0.3)', border: '#4ecdc4'},
-    {background: 'rgba(69, 183, 209, 0.3)', border: '#45b7d1'},
-    {background: 'rgba(163,138,255,0.3)', border: '#6228d6'},
-    {background: 'rgba(255, 193, 7, 0.3)', border: '#ffc107'},
-    {background: 'rgba(233, 30, 99, 0.3)', border: '#e91e63'}
-];
-
-let nextId = 6;
-let chartInstances = {};
-let comparisonChart = null;
-let visibleCharacters = characters.map(c => c.id);
-let scoreSystem = '0-10';
-
-function wrapText(text, maxLength) {
-    const words = text.split(' ');
-    const lines = [];
-    let currentLine = '';
-
-    words.forEach(word => {
-        if ((currentLine + word).length > maxLength) {
-            if (currentLine) lines.push(currentLine.trim());
-            currentLine = word + ' ';
-        } else {
-            currentLine += word + ' ';
-        }
-    });
-
-    if (currentLine) lines.push(currentLine.trim());
-    return lines;
-}
-
-function createLabelsEditor() {
-    const container = document.getElementById('labels-editor');
-    container.innerHTML = '';
-    globalStatShortLabels.forEach((label, i) => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-            <input type="text" class="stat-name-input" value="${label}"
-                   placeholder="${globalStatLabels[i]}" onchange="updateGlobalStatLabel(${i}, this.value)">
-        `;
-        container.appendChild(div);
-    });
-}
-
-function updateGlobalStatLabel(index, value) {
-    if (value.trim() === '') {
-        globalStatShortLabels[index] = globalStatLabels[index].split('/')[0].trim();
-    } else {
-        globalStatShortLabels[index] = value.trim();
-    }
-    globalStatLabels[index] = globalStatShortLabels[index];
-
-    characters.forEach(character => {
-        character.statsLabels[index] = globalStatShortLabels[index];
-        const chart = chartInstances[character.id];
-        if (chart) {
-            chart.data.labels[index] = globalStatShortLabels[index];
-            chart.update();
-        }
-    });
-
-    if (comparisonChart) {
-        comparisonChart.data.labels[index] = globalStatShortLabels[index];
-        comparisonChart.update();
-    }
-
-    updateAllCards();
-}
-
-function updateCharacterStatLabel(characterId, index, value) {
-    const character = characters.find(c => c.id === characterId);
-    if (character) {
-        if (value.trim() === '') {
-            character.statsLabels[index] = globalStatShortLabels[index];
-        } else {
-            character.statsLabels[index] = value.trim();
-        }
-        const chart = chartInstances[characterId];
-        if (chart) {
-            chart.data.labels[index] = character.statsLabels[index];
-            chart.update();
-        }
-        if (comparisonChart) {
-            comparisonChart.update();
-        }
-    }
-}
-
-function changeScoreSystem(newSystem) {
-    if (newSystem === scoreSystem) return;
-
-    const oldSystem = scoreSystem;
-    scoreSystem = newSystem;
-    const maxValue = scoreSystem === '0-10' ? 10 : 5;
-    const minValue = scoreSystem === '0-10' ? 0 : -5;
-
-    characters.forEach(character => {
-        character.stats = character.stats.map(stat => {
-            if (oldSystem === '0-10' && newSystem === '-5-5') {
-                return (stat - 5) * 1;
-            } else if (oldSystem === '-5-5' && newSystem === '0-10') {
-                return (stat + 5) * 1;
-            }
-            return stat;
+    const set = useCallback((updater) => {
+        setState(prev => {
+            const next = typeof updater === "function" ? updater(prev) : updater;
+            history.current = [...history.current.slice(0, idx.current + 1), next].slice(-MAX_UNDO);
+            idx.current = history.current.length - 1;
+            return next;
         });
-        const chart = chartInstances[character.id];
-        if (chart) {
-            chart.data.datasets[0].data = character.stats;
-            chart.options.scales.r.min = minValue;
-            chart.options.scales.r.max = maxValue;
-            chart.options.scales.r.beginAtZero = scoreSystem === '0-10';
-            chart.options.scales.r.ticks.stepSize = scoreSystem === '0-10' ? 2 : 2;
-            chart.update();
-        }
-    });
+    }, []);
 
-    if (comparisonChart) {
-        comparisonChart.data.datasets = characters
-            .filter(c => visibleCharacters.includes(c.id))
-            .map(c => ({
-                label: `${c.role === 'dm' ? 'ДМ ' : ''}${c.name}`,
-                data: c.stats,
-                backgroundColor: c.color.background,
-                borderColor: c.color.border,
-                borderWidth: 2,
-                pointBackgroundColor: c.color.border,
-                pointBorderColor: '#fff',
-                pointRadius: 5
-            }));
-        comparisonChart.options.scales.r.min = minValue;
-        comparisonChart.options.scales.r.max = maxValue;
-        comparisonChart.options.scales.r.beginAtZero = scoreSystem === '0-10';
-        comparisonChart.options.scales.r.ticks.stepSize = scoreSystem === '0-10' ? 2 : 2;
-        comparisonChart.update();
-    }
+    const undo = useCallback(() => {
+        if (idx.current > 0) { idx.current--; setState(history.current[idx.current]); }
+    }, []);
 
-    updateAllCards();
+    const redo = useCallback(() => {
+        if (idx.current < history.current.length - 1) { idx.current++; setState(history.current[idx.current]); }
+    }, []);
+
+    const canUndo = idx.current > 0;
+    const canRedo = idx.current < history.current.length - 1;
+
+    return [state, set, { undo, redo, canUndo, canRedo }];
 }
 
-function updateAllCards() {
-    const container = document.getElementById('charts-container');
-    container.innerHTML = '';
-    characters.forEach(character => createCharacterCard(character));
+/* ─── SVG radar (pure, no deps) ─── */
+function RadarChart({ datasets, labels, size = 280 }) {
+    const cx = size / 2, cy = size / 2, R = size * 0.34;
+    const n = labels.length;
+    const angle = (i) => -Math.PI / 2 + (2 * Math.PI * i) / n;
+    const px = (i, r) => cx + r * Math.cos(angle(i));
+    const py = (i, r) => cy + r * Math.sin(angle(i));
+    const ticks = [0, 2, 4, 6, 8, 10];
+
+    return (
+        <svg viewBox={`0 0 ${size} ${size}`} style={{ width: "100%", maxWidth: size, display: "block", margin: "0 auto" }}>
+            {/* grid circles */}
+            {ticks.map(t => (
+                <circle key={t} cx={cx} cy={cy} r={R * t / 10}
+                        fill="none" stroke="var(--grid)" strokeWidth="0.5" />
+            ))}
+            {/* axes */}
+            {labels.map((_, i) => (
+                <line key={i} x1={cx} y1={cy} x2={px(i, R)} y2={py(i, R)}
+                      stroke="var(--grid)" strokeWidth="0.5" />
+            ))}
+            {/* tick labels */}
+            {ticks.filter(t => t > 0).map(t => (
+                <text key={t} x={cx + 3} y={cy - R * t / 10 - 3}
+                      fontSize="9" fill="var(--muted)" textAnchor="start">{t}</text>
+            ))}
+            {/* data polygons */}
+            {datasets.map((ds, di) => {
+                const pts = ds.data.map((v, i) => `${px(i, R * Math.max(0, v) / 10)},${py(i, R * Math.max(0, v) / 10)}`).join(" ");
+                return (
+                    <g key={di}>
+                        <polygon points={pts} fill={ds.bg} stroke={ds.hex} strokeWidth="2"
+                                 style={{ transition: "all 0.3s ease" }} />
+                        {ds.data.map((v, i) => (
+                            <circle key={i} cx={px(i, R * Math.max(0, v) / 10)} cy={py(i, R * Math.max(0, v) / 10)}
+                                    r="3.5" fill={ds.hex} stroke="var(--card)" strokeWidth="1.5"
+                                    style={{ transition: "all 0.3s ease" }} />
+                        ))}
+                    </g>
+                );
+            })}
+            {/* labels */}
+            {labels.map((label, i) => {
+                const lx = px(i, R + 28), ly = py(i, R + 28);
+                return (
+                    <text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle"
+                          fontSize="11" fontWeight="500" fill="var(--text)">
+                        {label.length > 13 ? label.slice(0, 12) + "…" : label}
+                    </text>
+                );
+            })}
+        </svg>
+    );
 }
 
-function createSVGRadarChart(container, character, isComparison = false) {
-    const size = 380;
-    const center = size / 2;
-    const maxRadius = size * 0.35;
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('class', 'radar-svg');
-    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
-    svg.setAttribute('width', '380');
-    svg.setAttribute('height', '380');
+/* ─── color picker popover ─── */
+function ColorPicker({ current, onChange }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
 
-    container.innerHTML = '';
+    useEffect(() => {
+        if (!open) return;
+        const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) };
+        document.addEventListener("mousedown", close);
+        return () => document.removeEventListener("mousedown", close);
+    }, [open]);
 
-    const maxValue = scoreSystem === '0-10' ? 10 : 5;
-    const minValue = scoreSystem === '0-10' ? 0 : -5;
-    const step = scoreSystem === '0-10' ? 2 : 2;
-    const ticks = (maxValue - minValue) / step;
-
-    for (let i = 0; i <= ticks; i++) {
-        const radius = (maxRadius * i) / ticks;
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', center);
-        circle.setAttribute('cy', center);
-        circle.setAttribute('r', radius);
-        circle.setAttribute('fill', 'none');
-        circle.setAttribute('stroke', 'rgba(255, 255, 255, 0.1)');
-        circle.setAttribute('stroke-width', '1');
-        svg.appendChild(circle);
-
-        const labelValue = minValue + (i * step);
-        const labelY = center - radius - 10;
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', center);
-        text.setAttribute('y', labelY);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', '#ffffff');
-        text.setAttribute('font-size', '10px');
-        text.textContent = labelValue;
-        svg.appendChild(text);
-    }
-
-    const angleStep = (2 * Math.PI) / globalStatShortLabels.length;
-    for (let i = 0; i < globalStatShortLabels.length; i++) {
-        const angle = -Math.PI / 2 + i * angleStep;
-        const x2 = center + maxRadius * Math.cos(angle);
-        const y2 = center + maxRadius * Math.sin(angle);
-
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', center);
-        line.setAttribute('y1', center);
-        line.setAttribute('x2', x2);
-        line.setAttribute('y2', y2);
-        line.setAttribute('stroke', 'rgba(255, 255, 255, 0.1)');
-        line.setAttribute('stroke-width', '1');
-        svg.appendChild(line);
-
-        const labelX = center + (maxRadius + 40) * Math.cos(angle);
-        const labelY = center + (maxRadius + 40) * Math.sin(angle);
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', labelX);
-        text.setAttribute('y', labelY);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', '#ffffff');
-        text.setAttribute('font-size', '12px');
-        text.setAttribute('font-weight', 'bold');
-
-        const labelText = isComparison ? globalStatShortLabels[i] : (character ? character.statsLabels[i] : globalStatShortLabels[i]);
-        const lines = wrapText(labelText, 12);
-        lines.forEach((line, index) => {
-            const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-            tspan.setAttribute('x', labelX);
-            tspan.setAttribute('dy', index === 0 ? '-0.5em' : '1em');
-            if (index === 0) tspan.setAttribute('y', labelY);
-            tspan.textContent = line;
-            text.appendChild(tspan);
-        });
-
-        if (isComparison && statDescriptions[labelText]) {
-            const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-            title.textContent = statDescriptions[labelText];
-            text.appendChild(title);
-        }
-
-        svg.appendChild(text);
-    }
-
-    if (isComparison) {
-        characters.forEach(char => {
-            if (visibleCharacters.includes(char.id)) {
-                createDataPolygon(svg, char, center, maxRadius, angleStep);
-            }
-        });
-    } else {
-        createDataPolygon(svg, character, center, maxRadius, angleStep);
-    }
-
-    container.appendChild(svg);
-}
-
-function createDataPolygon(svg, character, center, maxRadius, angleStep) {
-    const maxValue = scoreSystem === '0-10' ? 10 : 5;
-    const minValue = scoreSystem === '0-10' ? 0 : -5;
-    const points = [];
-    for (let i = 0; i < character.stats.length; i++) {
-        const angle = -Math.PI / 2 + i * angleStep;
-        const value = character.stats[i];
-        const normalizedValue = (value - minValue) / (maxValue - minValue);
-        const radius = maxRadius * normalizedValue;
-        const x = center + radius * Math.cos(angle);
-        const y = center + radius * Math.sin(angle);
-        points.push(`${x},${y}`);
-    }
-
-    const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    polygon.setAttribute('points', points.join(' '));
-    polygon.setAttribute('fill', character.color.background);
-    polygon.setAttribute('stroke', character.color.border);
-    polygon.setAttribute('stroke-width', '2');
-    polygon.setAttribute('class', 'data-polygon');
-    svg.appendChild(polygon);
-
-    for (let i = 0; i < character.stats.length; i++) {
-        const angle = -Math.PI / 2 + i * angleStep;
-        const value = character.stats[i];
-        const normalizedValue = (value - minValue) / (maxValue - minValue);
-        const radius = maxRadius * normalizedValue;
-        const x = center + radius * Math.cos(angle);
-        const y = center + radius * Math.sin(angle);
-
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', x);
-        circle.setAttribute('cy', y);
-        circle.setAttribute('r', '4');
-        circle.setAttribute('fill', character.color.border);
-        circle.setAttribute('stroke', '#fff');
-        circle.setAttribute('stroke-width', '2');
-        circle.setAttribute('class', 'data-point');
-        svg.appendChild(circle);
-    }
-}
-
-function createCharacterCard(character) {
-    const container = document.getElementById('charts-container');
-    const cardDiv = document.createElement('div');
-    cardDiv.className = `chart-card ${character.role}-card`;
-    cardDiv.id = `card-${character.id}`;
-
-    const minValue = scoreSystem === '0-10' ? 0 : -5;
-    const maxValue = scoreSystem === '0-10' ? 10 : 5;
-
-    cardDiv.innerHTML = `
-        <button class="delete-btn" onclick="deleteCharacter(${character.id})">×</button>
-        <div class="chart-header">
-            <span class="role-badge ${character.role}-badge">
-                ${character.role === 'player' ? '🎲 Игрок' : '🎭 ДМ'}
-            </span>
-            <input type="text" class="name-input chart-title" value="${character.name}"
-                   onchange="updateCharacterName(${character.id}, this.value)">
-        </div>
-        <div class="chart-canvas">
-            <div class="radar-chart" id="chart-${character.id}"></div>
-        </div>
-        <div class="stats-editor">
-            ${character.stats.map((stat, i) => `
-                <div class="stat-editor">
-                    <input type="text" class="stat-name-input" value="${character.statsLabels[i]}"
-                           onchange="updateCharacterStatLabel(${character.id}, ${i}, this.value)">
-                    <input type="number" class="stat-input" min="${minValue}" max="${maxValue}" value="${stat}"
-                           onchange="updateStat(${character.id}, ${i}, parseInt(this.value))">
-                    <input type="range" class="stat-slider" min="${minValue}" max="${maxValue}" value="${stat}"
-                           oninput="updateStat(${character.id}, ${i}, parseInt(this.value)); this.previousElementSibling.value = this.value">
+    const c = getColor(current);
+    return (
+        <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+            <button onClick={() => setOpen(!open)}
+                    style={{ width: 22, height: 22, borderRadius: "50%", background: c.hex,
+                        border: "2px solid var(--border)", cursor: "pointer", padding: 0 }} />
+            {open && (
+                <div style={{ position: "absolute", top: 30, left: -20, zIndex: 10,
+                    background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10,
+                    padding: 8, display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>
+                    {PALETTE.map(p => (
+                        <button key={p.id} onClick={() => { onChange(p.id); setOpen(false); }}
+                                style={{ width: 26, height: 26, borderRadius: "50%", background: p.hex,
+                                    border: p.id === current ? "2px solid var(--text)" : "2px solid transparent",
+                                    cursor: "pointer", padding: 0, transition: "transform 0.15s",
+                                }}
+                                onMouseEnter={e => e.target.style.transform = "scale(1.2)"}
+                                onMouseLeave={e => e.target.style.transform = "scale(1)"} />
+                    ))}
                 </div>
-            `).join('')}
+            )}
         </div>
-    `;
-
-    container.appendChild(cardDiv);
-    updateChart(character);
-    updateCharacterToggles();
-    updateExportMenu();
+    );
 }
 
-function updateChart(character) {
-    const chartContainer = document.getElementById(`chart-${character.id}`);
-    if (!chartContainer) return;
-
-    const maxValue = scoreSystem === '0-10' ? 10 : 5;
-    const minValue = scoreSystem === '0-10' ? 0 : -5;
-
-    if (typeof Chart !== 'undefined') {
-        if (chartInstances[character.id]) {
-            chartInstances[character.id].destroy();
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = 380;
-        canvas.height = 380;
-        chartContainer.innerHTML = '';
-        chartContainer.appendChild(canvas);
-        const ctx = canvas.getContext('2d');
-
-        chartInstances[character.id] = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: character.statsLabels,
-                datasets: [{
-                    label: character.name,
-                    data: character.stats,
-                    backgroundColor: character.color.background,
-                    borderColor: character.color.border,
-                    borderWidth: 3,
-                    pointBackgroundColor: character.color.border,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6
-                }]
-            },
-            options: {
-                responsive: false,
-                maintainAspectRatio: true,
-                animation: {
-                    duration: 800,
-                    easing: 'easeOutCubic'
-                },
-                scales: {
-                    r: {
-                        beginAtZero: scoreSystem === '0-10',
-                        min: minValue,
-                        max: maxValue,
-                        ticks: {
-                            stepSize: scoreSystem === '0-10' ? 2 : 2,
-                            backdropColor: 'rgba(0, 0, 0, 0)',
-                            color: 'rgba(255, 255, 255, 0.7)'
-                        },
-                        pointLabels: {
-                            font: {size: 12, weight: 'bold'},
-                            color: '#ffffff'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.2)'
-                        },
-                        angleLines: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {display: false}
-                }
-            }
-        });
-    } else {
-        createSVGRadarChart(chartContainer, character);
-    }
+/* ─── stat slider row ─── */
+function StatRow({ label, value, onChange }) {
+    return (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 44px 1fr", gap: 8, alignItems: "center", marginBottom: 4 }}>
+            <span style={{ fontSize: 13, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+            <input type="number" min={0} max={10} step={1} value={value}
+                   onChange={e => onChange(Math.max(0, Math.min(10, +e.target.value || 0)))}
+                   style={{ width: 44, textAlign: "center", background: "var(--surface)", border: "1px solid var(--border)",
+                       borderRadius: 6, color: "var(--text)", padding: "4px 2px", fontSize: 14, fontWeight: 600 }} />
+            <input type="range" min={0} max={10} step={1} value={value}
+                   onChange={e => onChange(+e.target.value)}
+                   style={{ width: "100%", accentColor: "var(--accent)" }} />
+        </div>
+    );
 }
 
-function updateCharacterToggles() {
-    const container = document.getElementById('character-toggles');
-    container.innerHTML = '';
-    characters.forEach(character => {
-        const div = document.createElement('div');
-        div.className = 'character-toggle';
-        div.innerHTML = `
-            <input type="checkbox" id="toggle-${character.id}" 
-                   ${visibleCharacters.includes(character.id) ? 'checked' : ''} 
-                   onchange="toggleCharacterVisibility(${character.id}, this.checked)">
-            <label for="toggle-${character.id}">${character.role === 'dm' ? '🎭' : '🎲'} ${character.name}</label>
-        `;
+/* ─── character card ─── */
+function CharacterCard({ char, labels, onUpdate, onDelete }) {
+    const c = getColor(char.colorId);
+    const ds = [{ data: char.stats, hex: c.hex, bg: c.bg }];
 
-        div.addEventListener('click', function(e) {
-            // Предотвращаем двойное срабатывание, если клик по checkbox или label
-            if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL') return;
+    return (
+        <div style={{
+            background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
+            padding: "20px 20px 16px", position: "relative",
+            borderLeft: `3px solid ${c.hex}`,
+            transition: "transform 0.2s, box-shadow 0.2s",
+        }}
+             onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = `0 8px 24px ${c.bg}` }}
+             onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "" }}>
+            {/* delete */}
+            <button onClick={() => { if (confirm("Удалить " + char.name + "?")) onDelete(char.id) }}
+                    style={{ position: "absolute", top: 10, right: 10, background: "none", border: "none",
+                        color: "var(--muted)", cursor: "pointer", fontSize: 18, padding: "2px 6px", borderRadius: 6,
+                        transition: "color 0.15s" }}
+                    onMouseEnter={e => e.target.style.color = "#E24B4A"}
+                    onMouseLeave={e => e.target.style.color = "var(--muted)"}>×</button>
 
-            const checkbox = div.querySelector('input[type="checkbox"]');
-            checkbox.checked = !checkbox.checked;
-            toggleCharacterVisibility(character.id, checkbox.checked);
-        });
+            {/* header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <ColorPicker current={char.colorId} onChange={cid => onUpdate({ ...char, colorId: cid })} />
+                <span style={{
+                    fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8,
+                    padding: "3px 10px", borderRadius: 12,
+                    background: char.role === "dm" ? "rgba(127,119,221,0.15)" : "rgba(29,158,117,0.15)",
+                    color: char.role === "dm" ? "#9b8eef" : "#5edcd4",
+                }}>{char.role === "dm" ? "ДМ" : "Игрок"}</span>
+                <input value={char.name}
+                       onChange={e => onUpdate({ ...char, name: e.target.value })}
+                       style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid transparent",
+                           color: "var(--text)", fontSize: 17, fontWeight: 600, padding: "4px 0",
+                           fontFamily: "inherit", outline: "none",
+                           transition: "border-color 0.2s" }}
+                       onFocus={e => e.target.style.borderBottomColor = c.hex}
+                       onBlur={e => e.target.style.borderBottomColor = "transparent"} />
+            </div>
 
-        container.appendChild(div);
+            {/* chart */}
+            <RadarChart datasets={ds} labels={labels} size={260} />
+
+            {/* stats */}
+            <div style={{ marginTop: 12 }}>
+                {char.stats.map((v, i) => (
+                    <StatRow key={i} label={labels[i]} value={v}
+                             onChange={val => {
+                                 const next = [...char.stats]; next[i] = val;
+                                 onUpdate({ ...char, stats: next });
+                             }} />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/* ─── comparison section ─── */
+function ComparisonSection({ chars, labels, visible, onToggle }) {
+    const ds = chars.filter(c => visible.has(c.id)).map(c => {
+        const col = getColor(c.colorId);
+        return { data: c.stats, hex: col.hex, bg: col.bg, label: c.name };
+    });
+
+    return (
+        <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
+            padding: 24, textAlign: "center", marginTop: 8 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--text)", margin: "0 0 16px" }}>
+                Сравнительный анализ команды
+            </h2>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16 }}>
+                {chars.map(c => {
+                    const col = getColor(c.colorId);
+                    const on = visible.has(c.id);
+                    return (
+                        <label key={c.id} style={{
+                            display: "flex", alignItems: "center", gap: 6, padding: "5px 12px",
+                            borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 500,
+                            background: on ? col.bg : "var(--surface)", border: `1px solid ${on ? col.hex : "var(--border)"}`,
+                            color: on ? col.hex : "var(--muted)", transition: "all 0.2s", userSelect: "none",
+                        }}>
+                            <input type="checkbox" checked={on}
+                                   onChange={e => onToggle(c.id, e.target.checked)}
+                                   style={{ display: "none" }} />
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: on ? col.hex : "var(--muted)" }} />
+                            {c.name}
+                        </label>
+                    );
+                })}
+            </div>
+            <RadarChart datasets={ds} labels={labels} size={340} />
+            {/* legend */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center", marginTop: 12 }}>
+                {ds.map((d, i) => (
+                    <span key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--muted)" }}>
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: d.hex }} />
+                        {d.label}
+          </span>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/* ─── export utilities ─── */
+function svgToPng(svgEl, width, height, bg) {
+    return new Promise((resolve) => {
+        const clone = svgEl.cloneNode(true);
+        const css = getComputedStyle(document.documentElement);
+        const vars = { "--text": css.getPropertyValue("--text").trim() || "#fff",
+            "--muted": css.getPropertyValue("--muted").trim() || "#999",
+            "--grid": css.getPropertyValue("--grid").trim() || "rgba(255,255,255,0.1)",
+            "--card": css.getPropertyValue("--card").trim() || "#1e1e2f" };
+        const styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
+        styleEl.textContent = `:root{${Object.entries(vars).map(([k,v])=>`${k}:${v}`).join(";")}}`;
+        clone.insertBefore(styleEl, clone.firstChild);
+        const data = new XMLSerializer().serializeToString(clone);
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = width * 2; canvas.height = height * 2;
+            const ctx = canvas.getContext("2d");
+            ctx.scale(2, 2);
+            if (bg) { ctx.fillStyle = bg; ctx.fillRect(0, 0, width, height); }
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/png"));
+        };
+        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(data);
     });
 }
 
-function toggleCharacterVisibility(characterId, isVisible) {
-    if (isVisible) {
-        if (!visibleCharacters.includes(characterId)) {
-            visibleCharacters.push(characterId);
-        }
-    } else {
-        visibleCharacters = visibleCharacters.filter(id => id !== characterId);
-    }
-    updateComparisonChart();
+/* ─── JSON import/export ─── */
+function exportJSON(state) {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "rpg-team-profiles.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
 }
 
-function updateComparisonChart() {
-    const chartContainer = document.getElementById('comparison-chart');
-    if (!chartContainer) return;
-
-    const maxValue = scoreSystem === '0-10' ? 10 : 5;
-    const minValue = scoreSystem === '0-10' ? 0 : -5;
-
-    if (typeof Chart !== 'undefined') {
-        if (comparisonChart) {
-            comparisonChart.data.datasets = characters
-                .filter(character => visibleCharacters.includes(character.id))
-                .map(character => ({
-                    label: `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`,
-                    data: character.stats,
-                    backgroundColor: character.color.background,
-                    borderColor: character.color.border,
-                    borderWidth: 2,
-                    pointBackgroundColor: character.color.border,
-                    pointBorderColor: '#fff',
-                    pointRadius: 5
-                }));
-            comparisonChart.update();
-        } else {
-            const canvas = document.createElement('canvas');
-            canvas.width = 380;
-            canvas.height = 380;
-            chartContainer.innerHTML = '';
-            chartContainer.appendChild(canvas);
-            const ctx = canvas.getContext('2d');
-
-            comparisonChart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: globalStatShortLabels,
-                    datasets: characters
-                        .filter(character => visibleCharacters.includes(character.id))
-                        .map(character => ({
-                            label: `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`,
-                            data: character.stats,
-                            backgroundColor: character.color.background,
-                            borderColor: character.color.border,
-                            borderWidth: 2,
-                            pointBackgroundColor: character.color.border,
-                            pointBorderColor: '#fff',
-                            pointRadius: 5
-                        }))
-                },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: true,
-                    animation: {
-                        duration: 800,
-                        easing: 'easeOutCubic'
-                    },
-                    scales: {
-                        r: {
-                            beginAtZero: scoreSystem === '0-10',
-                            min: minValue,
-                            max: maxValue,
-                            ticks: {
-                                stepSize: scoreSystem === '0-10' ? 2 : 2,
-                                backdropColor: 'rgba(0, 0, 0, 0)',
-                                color: 'rgba(255, 255, 255, 0.7)'
-                            },
-                            pointLabels: {
-                                font: {size: 12, weight: 'bold'},
-                                color: '#ffffff'
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.2)'
-                            },
-                            angleLines: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#ffffff',
-                                font: {size: 12},
-                                padding: 15
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    } else {
-        createSVGRadarChart(chartContainer, null, true);
-    }
-}
-
-function updateStat(characterId, statIndex, value) {
-    const maxValue = scoreSystem === '0-10' ? 10 : 5;
-    const minValue = scoreSystem === '0-10' ? 0 : -5;
-    value = Math.max(minValue, Math.min(maxValue, value));
-    const character = characters.find(c => c.id === characterId);
-    if (character) {
-        character.stats[statIndex] = value;
-
-        const chart = chartInstances[characterId];
-        if (chart) {
-            chart.data.datasets[0].data[statIndex] = value;
-            chart.update();
-        } else {
-            const chartContainer = document.getElementById(`chart-${characterId}`);
-            if (chartContainer) {
-                createSVGRadarChart(chartContainer, character);
-            }
-        }
-
-        if (comparisonChart) {
-            const datasetIndex = comparisonChart.data.datasets.findIndex(
-                ds => ds.label === `${character.role === 'dm' ? 'ДМ ' : ''}${character.name}`
-            );
-            if (datasetIndex !== -1) {
-                comparisonChart.data.datasets[datasetIndex].data[statIndex] = value;
-                comparisonChart.update();
-            }
-        } else {
-            const chartContainer = document.getElementById('comparison-chart');
-            if (chartContainer) {
-                createSVGRadarChart(chartContainer, null, true);
-            }
-        }
-
-        const card = document.getElementById(`card-${characterId}`);
-        const statEditor = card.querySelector(`.stat-editor:nth-child(${statIndex + 1})`);
-        const numberInput = statEditor.querySelector('.stat-input');
-        const sliderInput = statEditor.querySelector('.stat-slider');
-        numberInput.value = value;
-        sliderInput.value = value;
-    }
-}
-
-function updateCharacterName(characterId, name) {
-    const character = characters.find(c => c.id === characterId);
-    if (character) {
-        const oldName = character.name;
-        character.name = name;
-        const chart = chartInstances[characterId];
-        if (chart) {
-            chart.data.datasets[0].label = name;
-            chart.update();
-        }
-        if (comparisonChart) {
-            const datasetIndex = comparisonChart.data.datasets.findIndex(
-                ds => ds.label === `${character.role === 'dm' ? 'ДМ ' : ''}${oldName}`
-            );
-            if (datasetIndex !== -1) {
-                comparisonChart.data.datasets[datasetIndex].label = `${character.role === 'dm' ? 'ДМ ' : ''}${name}`;
-                comparisonChart.update();
-            }
-        }
-        updateCharacterToggles();
-        updateExportMenu();
-    }
-}
-
-function addPlayer() {
-    const colorIndex = characters.filter(c => c.role === 'player').length % playerColors.length;
-    const defaultStats = scoreSystem === '0-10' ? [5, 5, 5, 5, 5] : [0, 0, 0, 0, 0];
-    const newPlayer = {
-        id: nextId++,
-        name: 'Новый игрок',
-        role: 'player',
-        stats: defaultStats,
-        statsLabels: [...globalStatShortLabels],
-        color: playerColors[colorIndex]
-    };
-    characters.push(newPlayer);
-    visibleCharacters.push(newPlayer.id);
-    createCharacterCard(newPlayer);
-    updateComparisonChart();
-}
-
-function addDM() {
-    const defaultStats = scoreSystem === '0-10' ? [5, 5, 5, 5, 5] : [0, 0, 0, 0, 0];
-    const newDM = {
-        id: nextId++,
-        name: 'Новый ДМ',
-        role: 'dm',
-        stats: defaultStats,
-        statsLabels: [...globalStatShortLabels],
-        color: {background: 'rgba(153, 102, 255, 0.3)', border: '#9966ff'}
-    };
-    characters.push(newDM);
-    visibleCharacters.push(newDM.id);
-    createCharacterCard(newDM);
-    updateComparisonChart();
-}
-
-function deleteCharacter(characterId) {
-    if (confirm('Удалить этого персонажа?')) {
-        characters = characters.filter(c => c.id !== characterId);
-        visibleCharacters = visibleCharacters.filter(id => id !== characterId);
-        const card = document.getElementById(`card-${characterId}`);
-        if (card) {
-            card.remove();
-        }
-        if (chartInstances[characterId]) {
-            chartInstances[characterId].destroy();
-            delete chartInstances[characterId];
-        }
-        updateComparisonChart();
-        updateCharacterToggles();
-        updateExportMenu();
-    }
-}
-
-function saveTeamToURL() {
-    const teamData = {
-        characters: characters.map(c => ({
-            id: c.id,
-            name: c.name,
-            role: c.role,
-            stats: c.stats,
-            statsLabels: c.statsLabels,
-            color: c.color
-        })),
-        globalStatLabels,
-        scoreSystem
-    };
-    const jsonString = JSON.stringify(teamData);
-    const compressed = pako.gzip(jsonString);
-    const base64Data = btoa(String.fromCharCode.apply(null, compressed));
-    const url = `${window.location.origin}${window.location.pathname}?team=${encodeURIComponent(base64Data)}`;
-
-    navigator.clipboard.writeText(url).then(() => {
-        alert('Ссылка на профили команды скопирована в буфер обмена!');
-    }).catch(err => {
-        console.error('Ошибка копирования:', err);
-        alert(`Ссылка: ${url}\nСкопируйте её вручную.`);
+function importJSON(file) {
+    return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => { try { resolve(JSON.parse(r.result)) } catch(e) { reject(e) } };
+        r.onerror = reject;
+        r.readAsText(file);
     });
 }
 
-function loadTeamFromURL() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const teamData = urlParams.get('team');
-    if (teamData) {
-        try {
-            const decoded = decodeURIComponent(teamData);
-            const binary = atob(decoded);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            const jsonString = pako.ungzip(bytes, { to: 'string' });
-            const data = JSON.parse(jsonString);
-
-            characters = data.characters || [];
-            globalStatLabels = data.globalStatLabels || globalStatLabels;
-            globalStatShortLabels = globalStatLabels.map(label => label.split('/')[0].trim());
-            scoreSystem = data.scoreSystem || '0-10';
-            nextId = characters.length > 0 ? Math.max(...characters.map(c => c.id)) + 1 : 1;
-            visibleCharacters = characters.map(c => c.id);
-
-            document.getElementById('score-system').value = scoreSystem;
-        } catch (e) {
-            console.error('Ошибка загрузки данных из URL:', e);
-            alert('Не удалось загрузить профили команды. Проверьте ссылку.');
-        }
-    }
-}
-
-function resetAll() {
-    if (confirm('Сбросить все данные? Это действие нельзя отменить.')) {
-        characters = [];
-        visibleCharacters = [];
-        globalStatLabels = [
-            'Ролеплей/Нарратив',
-            'Импровизация',
-            'Знание правил',
-            'Социальность/Справедливость',
-            'Тактика/Подготовка'
-        ];
-        globalStatShortLabels = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
-        scoreSystem = '0-10';
-        nextId = 1;
-
-        document.getElementById('score-system').value = '0-10';
-        document.getElementById('charts-container').innerHTML = '';
-        document.getElementById('character-toggles').innerHTML = '';
-        document.getElementById('comparison-chart').innerHTML = '';
-        Object.values(chartInstances).forEach(chart => chart.destroy());
-        chartInstances = {};
-        if (comparisonChart) {
-            comparisonChart.destroy();
-            comparisonChart = null;
-        }
-        createLabelsEditor();
-        updateAllCards();
-        updateCharacterToggles();
-        updateComparisonChart();
-        updateExportMenu();
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-}
-
-function updateExportMenu() {
-    const individualExports = document.getElementById('individual-exports');
-    individualExports.innerHTML = '';
-
-    characters.forEach(character => {
-        const option = document.createElement('div');
-        option.className = 'export-option';
-        option.innerHTML = `${character.role === 'dm' ? '🎭' : '🎲'} ${character.name}`;
-        option.onclick = () => exportCharacterChart(character.id);
-        individualExports.appendChild(option);
-    });
-}
-
-function toggleExportMenu() {
-    const menu = document.getElementById('export-menu');
-    menu.classList.toggle('show');
-
-    setTimeout(() => {
-        const closeMenu = (e) => {
-            if (!e.target.closest('.export-dropdown')) {
-                menu.classList.remove('show');
-                document.removeEventListener('click', closeMenu);
+/* ─── keyboard shortcut hook ─── */
+function useHotkeys(handlers) {
+    useEffect(() => {
+        const fn = (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === "z" && !e.shiftKey && handlers.undo) { e.preventDefault(); handlers.undo(); }
+                if ((e.key === "y" || (e.key === "z" && e.shiftKey)) && handlers.redo) { e.preventDefault(); handlers.redo(); }
+                if (e.key === "s" && handlers.save) { e.preventDefault(); handlers.save(); }
             }
         };
-        document.addEventListener('click', closeMenu);
-    }, 0);
+        window.addEventListener("keydown", fn);
+        return () => window.removeEventListener("keydown", fn);
+    }, [handlers]);
 }
 
-function exportCharacterChart(characterId) {
-    const character = characters.find(c => c.id === characterId);
-    if (!character) return;
+/* ─── main app ─── */
+export default function App() {
+    const saved = useMemo(() => load(), []);
 
-    const card = document.getElementById(`card-${characterId}`);
-    if (!card) return;
+    const [chars, setChars, undoCtrl] = useUndoable(saved?.chars || DEFAULT_CHARS);
+    const [labels, setLabels] = useState(saved?.labels || [...DEFAULT_LABELS]);
+    const [visible, setVisible] = useState(() => new Set(saved?.visible || (saved?.chars || DEFAULT_CHARS).map(c => c.id)));
+    const [exportMenu, setExportMenu] = useState(false);
+    const [toast, setToast] = useState(null);
+    const exportRef = useRef(null);
+    const fileRef = useRef(null);
 
-    const statEditors = card.querySelectorAll('.stat-editor');
-    const originalInputs = [];
-    statEditors.forEach((editor, index) => {
-        const nameInput = editor.querySelector('.stat-name-input');
-        const numberInput = editor.querySelector('.stat-input');
-        const sliderInput = editor.querySelector('.stat-slider');
+    // auto-save
+    useEffect(() => {
+        persist({ chars, labels, visible: [...visible] });
+    }, [chars, labels, visible]);
 
-        const nameValue = nameInput.value;
-        const numberValue = numberInput.value;
+    // keyboard shortcuts
+    useHotkeys(useMemo(() => ({
+        undo: undoCtrl.undo,
+        redo: undoCtrl.redo,
+        save: () => { exportJSON({ chars, labels, visible: [...visible] }); showToast("JSON сохранён") },
+    }), [undoCtrl, chars, labels, visible]));
 
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'stat-name-input';
-        nameDiv.style.padding = '6px 10px';
-        nameDiv.style.textAlign = 'center';
-        nameDiv.style.fontSize = '0.8rem';
-        nameDiv.textContent = nameValue;
+    // close export menu on outside click
+    useEffect(() => {
+        if (!exportMenu) return;
+        const fn = (e) => { if (exportRef.current && !exportRef.current.contains(e.target)) setExportMenu(false) };
+        document.addEventListener("mousedown", fn);
+        return () => document.removeEventListener("mousedown", fn);
+    }, [exportMenu]);
 
-        const numberDiv = document.createElement('div');
-        numberDiv.className = 'stat-input';
-        numberDiv.style.display = 'flex';
-        numberDiv.style.alignItems = 'center';
-        numberDiv.style.justifyContent = 'center';
-        numberDiv.textContent = numberValue;
+    const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2200); };
 
-        originalInputs.push({nameInput, numberInput, sliderInput});
+    // CRUD
+    const updateChar = useCallback((updated) => {
+        setChars(prev => prev.map(c => c.id === updated.id ? updated : c));
+    }, [setChars]);
 
-        nameInput.parentNode.replaceChild(nameDiv, nameInput);
-        numberInput.parentNode.replaceChild(numberDiv, numberInput);
-        sliderInput.style.display = 'none';
-    });
+    const deleteChar = useCallback((id) => {
+        setChars(prev => prev.filter(c => c.id !== id));
+        setVisible(prev => { const n = new Set(prev); n.delete(id); return n; });
+    }, [setChars]);
 
-    html2canvas(card, {
-        backgroundColor: null,
-        scale: 1,
-        useCORS: true
-    }).then(canvas => {
-        statEditors.forEach((editor, index) => {
-            const {nameInput, numberInput, sliderInput} = originalInputs[index];
-            const nameDiv = editor.querySelector('.stat-name-input');
-            const numberDiv = editor.querySelector('.stat-input');
+    const addChar = (role) => {
+        const id = uid();
+        const colorIdx = chars.filter(c => c.role === role).length % PALETTE.length;
+        const newChar = {
+            id, name: role === "dm" ? "Новый ДМ" : "Новый игрок", role,
+            stats: [5,5,5,5,5],
+            colorId: role === "dm" ? "violet" : PALETTE[colorIdx].id,
+        };
+        setChars(prev => [...prev, newChar]);
+        setVisible(prev => new Set([...prev, id]));
+    };
 
-            nameDiv.parentNode.replaceChild(nameInput, nameDiv);
-            numberDiv.parentNode.replaceChild(numberInput, numberDiv);
-            sliderInput.style.display = '';
-        });
+    const reset = () => {
+        if (!confirm("Сбросить все данные?")) return;
+        setChars(DEFAULT_CHARS);
+        setLabels([...DEFAULT_LABELS]);
+        setVisible(new Set(DEFAULT_CHARS.map(c => c.id)));
+        showToast("Данные сброшены");
+    };
 
-        const link = document.createElement('a');
-        link.download = `${character.name}_PRGTeamProfile_${scoreSystem}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    });
+    const handleImport = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const data = await importJSON(file);
+            if (data.chars) setChars(data.chars);
+            if (data.labels) setLabels(data.labels);
+            if (data.visible) setVisible(new Set(data.visible));
+            showToast("Профили загружены");
+        } catch { showToast("Ошибка импорта"); }
+        e.target.value = "";
+    };
+
+    const toggleVis = (id, on) => {
+        setVisible(prev => { const n = new Set(prev); on ? n.add(id) : n.delete(id); return n; });
+    };
+
+    // share URL
+    const shareURL = async () => {
+        const data = JSON.stringify({ chars, labels, visible: [...visible] });
+        const encoded = btoa(unescape(encodeURIComponent(data)));
+        const url = location.origin + location.pathname + "?d=" + encodeURIComponent(encoded);
+        try { await navigator.clipboard.writeText(url); showToast("Ссылка скопирована"); }
+        catch { showToast("Не удалось скопировать"); }
+    };
+
+    // CSS vars injection
+    const cssVars = {
+        "--bg": "#0f0f1a",
+        "--surface": "#1a1a2e",
+        "--card": "#1e1e30",
+        "--border": "rgba(255,255,255,0.08)",
+        "--text": "#e8e8f0",
+        "--muted": "#7a7a99",
+        "--accent": "#7F77DD",
+        "--grid": "rgba(255,255,255,0.08)",
+        "--danger": "#E24B4A",
+    };
+
+    return (
+        <div style={{
+            ...cssVars,
+            fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
+            color: "var(--text)", minHeight: "100vh", padding: "24px 16px",
+            background: "linear-gradient(160deg, #0f0f1a 0%, #1a1a2e 40%, #0f0f1a 100%)",
+        }}>
+            {/* Toast */}
+            {toast && (
+                <div style={{
+                    position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", zIndex: 999,
+                    background: "var(--accent)", color: "#fff", padding: "10px 24px", borderRadius: 10,
+                    fontSize: 14, fontWeight: 600, boxShadow: "0 4px 20px rgba(127,119,221,0.4)",
+                    animation: "fadeIn 0.25s ease",
+                }}>{toast}</div>
+            )}
+
+            <style>{`
+        @keyframes fadeIn { from { opacity:0; transform:translateX(-50%) translateY(-10px) } to { opacity:1; transform:translateX(-50%) translateY(0) } }
+        input[type=range] { height: 4px; }
+        input[type=range]::-webkit-slider-thumb { width: 16px; height: 16px; }
+        ::selection { background: rgba(127,119,221,0.3); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+      `}</style>
+
+            {/* Header */}
+            <div style={{ textAlign: "center", marginBottom: 28 }}>
+                <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0,
+                    background: "linear-gradient(135deg, #7F77DD, #4ecdc4)", WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent" }}>
+                    RPG Team Profiler
+                </h1>
+                <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 6 }}>
+                    Профили и аналитика НРИ-команды
+                </p>
+            </div>
+
+            {/* Toolbar */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 24 }}>
+                <button onClick={() => addChar("player")}
+                        style={btnStyle}>+ Игрок</button>
+                <button onClick={() => addChar("dm")}
+                        style={btnStyle}>+ ДМ</button>
+                <button onClick={undoCtrl.undo} disabled={!undoCtrl.canUndo}
+                        style={{ ...btnStyle, opacity: undoCtrl.canUndo ? 1 : 0.35 }}>Отменить</button>
+                <button onClick={undoCtrl.redo} disabled={!undoCtrl.canRedo}
+                        style={{ ...btnStyle, opacity: undoCtrl.canRedo ? 1 : 0.35 }}>Повторить</button>
+
+                {/* Export dropdown */}
+                <div ref={exportRef} style={{ position: "relative" }}>
+                    <button onClick={() => setExportMenu(!exportMenu)} style={btnStyle}>Экспорт</button>
+                    {exportMenu && (
+                        <div style={{
+                            position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 20, minWidth: 200,
+                            background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10,
+                            boxShadow: "0 8px 32px rgba(0,0,0,0.4)", overflow: "hidden",
+                        }}>
+                            <div onClick={() => { exportJSON({ chars, labels, visible: [...visible] }); showToast("JSON сохранён"); setExportMenu(false); }}
+                                 style={menuItem}>JSON (все данные)</div>
+                            <div onClick={() => { shareURL(); setExportMenu(false); }}
+                                 style={menuItem}>Ссылка для шаринга</div>
+                            <div onClick={() => { fileRef.current?.click(); setExportMenu(false); }}
+                                 style={menuItem}>Импорт из JSON</div>
+                            <div style={{ height: 1, background: "var(--border)" }} />
+                            <div onClick={reset} style={{ ...menuItem, color: "var(--danger)" }}>Сбросить всё</div>
+                        </div>
+                    )}
+                </div>
+                <input ref={fileRef} type="file" accept=".json" onChange={handleImport} style={{ display: "none" }} />
+            </div>
+
+            {/* Label editor */}
+            <div style={{ marginBottom: 24, textAlign: "center" }}>
+                <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--muted)", marginBottom: 10 }}>Метки характеристик</h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", maxWidth: 700, margin: "0 auto" }}>
+                    {labels.map((l, i) => (
+                        <input key={i} value={l}
+                               onChange={e => { const n = [...labels]; n[i] = e.target.value; setLabels(n); }}
+                               style={{
+                                   background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8,
+                                   color: "var(--text)", padding: "8px 12px", fontSize: 13, width: 130, textAlign: "center",
+                                   fontFamily: "inherit",
+                               }} />
+                    ))}
+                </div>
+            </div>
+
+            {/* Character cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginBottom: 24 }}>
+                {chars.map(c => (
+                    <CharacterCard key={c.id} char={c} labels={labels}
+                                   onUpdate={updateChar} onDelete={deleteChar} />
+                ))}
+            </div>
+
+            {/* Comparison */}
+            {chars.length >= 2 && (
+                <ComparisonSection chars={chars} labels={labels} visible={visible} onToggle={toggleVis} />
+            )}
+
+            {/* Footer */}
+            <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 32, opacity: 0.5 }}>
+                Ctrl+Z / Ctrl+Y — отмена/повтор &middot; Ctrl+S — экспорт JSON
+            </p>
+        </div>
+    );
 }
 
-function exportComparison() {
-    const comparisonSection = document.getElementById('comparison-section');
-    if (!comparisonSection) return;
+const btnStyle = {
+    background: "rgba(127,119,221,0.12)", border: "1px solid rgba(127,119,221,0.25)",
+    color: "#b0a8f0", padding: "9px 18px", borderRadius: 8, cursor: "pointer",
+    fontSize: 13, fontWeight: 600, fontFamily: "inherit", transition: "all 0.2s",
+};
 
-    const originalStyle = comparisonSection.style.cssText;
-
-    comparisonSection.style.maxWidth = '600px';
-    comparisonSection.style.margin = '0 auto';
-    comparisonSection.style.padding = '30px';
-
-    const chartContainer = document.getElementById('comparison-chart');
-    let tempCanvas = chartContainer.querySelector('canvas');
-    if (!tempCanvas) {
-        updateComparisonChart();
-        tempCanvas = chartContainer.querySelector('canvas');
-    }
-
-    const toggleContainer = document.getElementById('character-toggles');
-    const originalToggleDisplay = toggleContainer.style.display;
-    toggleContainer.style.display = 'none';
-
-    html2canvas(comparisonSection, {
-        backgroundColor: null,
-        scale: 1,
-        useCORS: true
-    }).then(canvas => {
-        comparisonSection.style.cssText = originalStyle;
-        toggleContainer.style.display = originalToggleDisplay;
-
-        const link = document.createElement('a');
-        link.download = `PRGTeamAllProfile_${scoreSystem}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    });
-}
-
-function exportAllCharts() {
-    const zip = new JSZip();
-    const promises = [];
-
-    characters.forEach(character => {
-        const card = document.getElementById(`card-${character.id}`);
-        if (card) {
-            const statEditors = card.querySelectorAll('.stat-editor');
-            const originalInputs = [];
-            statEditors.forEach((editor, index) => {
-                const nameInput = editor.querySelector('.stat-name-input');
-                const numberInput = editor.querySelector('.stat-input');
-                const sliderInput = editor.querySelector('.stat-slider');
-
-                const nameValue = nameInput.value;
-                const numberValue = numberInput.value;
-
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'stat-name-input';
-                nameDiv.style.padding = '6px 10px';
-                nameDiv.style.textAlign = 'center';
-                nameDiv.style.fontSize = '0.8rem';
-                nameDiv.textContent = nameValue;
-
-                const numberDiv = document.createElement('div');
-                numberDiv.className = 'stat-input';
-                numberDiv.style.display = 'flex';
-                numberDiv.style.alignItems = 'center';
-                numberDiv.style.justifyContent = 'center';
-                numberDiv.textContent = numberValue;
-
-                originalInputs.push({nameInput, numberInput, sliderInput});
-
-                nameInput.parentNode.replaceChild(nameDiv, nameInput);
-                numberInput.parentNode.replaceChild(numberDiv, numberInput);
-                sliderInput.style.display = 'none';
-            });
-
-            const promise = html2canvas(card, {
-                backgroundColor: null,
-                scale: 1,
-                useCORS: true
-            }).then(canvas => {
-                statEditors.forEach((editor, index) => {
-                    const {nameInput, numberInput, sliderInput} = originalInputs[index];
-                    const nameDiv = editor.querySelector('.stat-name-input');
-                    const numberDiv = editor.querySelector('.stat-input');
-
-                    nameDiv.parentNode.replaceChild(nameInput, nameDiv);
-                    numberDiv.parentNode.replaceChild(numberInput, numberDiv);
-                    sliderInput.style.display = '';
-                });
-
-                const dataUrl = canvas.toDataURL('image/png');
-                zip.file(`${character.name}_характеристики_${scoreSystem}.png`, dataUrl.split(',')[1], {base64: true});
-            });
-            promises.push(promise);
-        }
-    });
-
-    const comparisonSection = document.getElementById('comparison-section');
-    if (comparisonSection) {
-        const originalStyle = comparisonSection.style.cssText;
-        comparisonSection.style.maxWidth = '600px';
-        comparisonSection.style.margin = '0 auto';
-        comparisonSection.style.padding = '30px';
-
-        const chartContainer = document.getElementById('comparison-chart');
-        let tempCanvas = chartContainer.querySelector('canvas');
-        if (!tempCanvas) {
-            updateComparisonChart();
-            tempCanvas = chartContainer.querySelector('canvas');
-        }
-
-        const toggleContainer = document.getElementById('character-toggles');
-        const originalToggleDisplay = toggleContainer.style.display;
-        toggleContainer.style.display = 'none';
-
-        const promise = html2canvas(comparisonSection, {
-            backgroundColor: null,
-            scale: 1,
-            useCORS: true
-        }).then(canvas => {
-            comparisonSection.style.cssText = originalStyle;
-            toggleContainer.style.display = originalToggleDisplay;
-            const dataUrl = canvas.toDataURL('image/png');
-            zip.file(`PRGTeamAllProfile_${scoreSystem}.png`, dataUrl.split(',')[1], {base64: true});
-        });
-        promises.push(promise);
-    }
-
-    Promise.all(promises).then(() => {
-        zip.generateAsync({type: 'blob'}).then(blob => {
-            saveAs(blob, `rpg_charts_${scoreSystem}.zip`);
-        });
-    });
-}
-
-function initialize() {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('team')) {
-        loadTeamFromURL();
-    }
-    createLabelsEditor();
-    characters.forEach(character => {
-        createCharacterCard(character);
-    });
-    updateCharacterToggles();
-    updateComparisonChart();
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
-} else {
-    initialize();
-}
-
-setTimeout(() => {
-    if (typeof Chart !== 'undefined' && document.querySelectorAll('canvas').length === 0) {
-        document.getElementById('charts-container').innerHTML = '';
-        initialize();
-    }
-}, 1000);
+const menuItem = {
+    padding: "11px 16px", fontSize: 13, color: "var(--text)", cursor: "pointer",
+    transition: "background 0.15s",
+};

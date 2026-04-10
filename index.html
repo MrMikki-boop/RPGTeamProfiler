@@ -5,41 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RPG Team Profiler</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
+        /* ═══════════════════════════════════════
+           DESIGN TOKENS
+        ═══════════════════════════════════════ */
         :root {
-            --bg0: #0d0d14;
-            --bg1: #13131f;
-            --bg2: #1c1c2e;
-            --bg3: #252540;
-            --surface: rgba(255,255,255,0.04);
-            --surface-hover: rgba(255,255,255,0.07);
-            --border: rgba(255,255,255,0.08);
-            --border-accent: rgba(180,140,255,0.3);
-            --gold: #c9a84c;
-            --gold-light: #e8c96a;
-            --purple: #7c5cbf;
-            --purple-light: #a07de0;
-            --teal: #3dbfb8;
-            --teal-light: #5ddbd4;
-            --red: #bf4c4c;
-            --red-light: #e07d7d;
+            --bg0: #09090f;
+            --bg1: #10101a;
+            --bg2: #17172a;
+            --bg3: #1f1f38;
+            --bg4: #282845;
+
+            --surface:        rgba(255,255,255,0.035);
+            --surface-hover:  rgba(255,255,255,0.06);
+            --border:         rgba(255,255,255,0.07);
+            --border-bright:  rgba(255,255,255,0.14);
+            --border-gold:    rgba(201,168,76,0.35);
+
+            --gold:        #c9a84c;
+            --gold-light:  #e8c96a;
+            --gold-dim:    rgba(201,168,76,0.18);
+
+            --purple:      #7c5cbf;
+            --purple-l:    #a07de0;
+            --purple-dim:  rgba(124,92,191,0.18);
+
+            --teal:    #3dbfb8;
+            --teal-l:  #5ddbd4;
+            --teal-dim: rgba(61,191,184,0.18);
+
+            --red:    #bf4c4c;
+            --red-l:  #e07d7d;
+
+            --green:    #4cbf77;
+            --orange:   #bf824c;
+            --blue:     #4c82bf;
+            --pink:     #bf4ca0;
+
             --text1: #f0ece4;
             --text2: #b8b0a0;
             --text3: #706860;
-            --radius: 10px;
-            --radius-sm: 6px;
-            --shadow: 0 8px 32px rgba(0,0,0,0.5);
+
+            --r:  10px;
+            --rs: 6px;
+
             --font-display: 'Cinzel', serif;
-            --font-body: 'Crimson Pro', serif;
+            --font-body:    'Crimson Pro', serif;
+
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* ═══════════════════════════════════════
+           RESET & BASE
+        ═══════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         html { scroll-behavior: smooth; }
 
@@ -48,160 +75,144 @@
             color: var(--text1);
             font-family: var(--font-body);
             font-size: 17px;
-            line-height: 1.5;
+            line-height: 1.55;
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* Фоновая текстура */
+        /* Atmospheric background */
         body::before {
             content: '';
-            position: fixed; inset: 0;
-            background-image:
-                    radial-gradient(ellipse 80% 60% at 15% 10%, rgba(124,92,191,0.12) 0%, transparent 60%),
-                    radial-gradient(ellipse 60% 40% at 85% 80%, rgba(61,191,184,0.08) 0%, transparent 50%),
-                    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 60%);
-            pointer-events: none; z-index: 0;
-            animation: bgPulse 20s ease-in-out infinite alternate;
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                    radial-gradient(ellipse 70% 50% at 12% 8%,  rgba(124,92,191,0.13) 0%, transparent 55%),
+                    radial-gradient(ellipse 50% 40% at 90% 85%, rgba(61,191,184,0.09) 0%, transparent 50%),
+                    radial-gradient(ellipse 35% 35% at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 55%);
+            animation: bgBreath 25s ease-in-out infinite alternate;
         }
-        @keyframes bgPulse {
-            from { opacity: 1; }
-            to { opacity: 0.6; }
+        @keyframes bgBreath {
+            from { opacity: 1; } to { opacity: 0.55; }
         }
 
-        /* Орнамент-разделитель */
-        .ornament {
-            text-align: center;
-            color: var(--gold);
-            opacity: 0.4;
-            font-size: 1.1em;
-            letter-spacing: 0.5em;
-            margin: 8px 0;
-        }
-
-        /* ─── ШАПКА ─── */
+        /* ═══════════════════════════════════════
+           HEADER
+        ═══════════════════════════════════════ */
         .header {
             position: relative; z-index: 1;
             text-align: center;
-            padding: 56px 24px 40px;
+            padding: 60px 24px 44px;
         }
-        .header-ornament {
+        .header-kicker {
             font-family: var(--font-body);
             font-style: italic;
             color: var(--gold);
-            opacity: 0.6;
-            font-size: 0.9em;
-            letter-spacing: 0.3em;
-            margin-bottom: 16px;
+            opacity: 0.65;
+            font-size: 0.85em;
+            letter-spacing: 0.35em;
+            margin-bottom: 14px;
+            display: block;
         }
         .header h1 {
             font-family: var(--font-display);
-            font-size: clamp(1.8em, 5vw, 3em);
+            font-size: clamp(1.9em, 5.5vw, 3.2em);
             font-weight: 900;
-            letter-spacing: 0.05em;
-            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 40%, var(--purple-light) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.06em;
+            line-height: 1.05;
+            background: linear-gradient(140deg, var(--gold-light) 0%, var(--gold) 38%, var(--purple-l) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: none;
-            line-height: 1.1;
         }
         .header-sub {
-            font-family: var(--font-body);
             font-style: italic;
             color: var(--text3);
             margin-top: 10px;
             font-size: 1.05em;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.04em;
         }
+        /* Decorative hr */
+        .hr-ornament {
+            display: flex; align-items: center; gap: 16px;
+            max-width: 360px; margin: 22px auto 0;
+            opacity: 0.35;
+        }
+        .hr-ornament::before, .hr-ornament::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(to right, transparent, var(--gold));
+        }
+        .hr-ornament::after { background: linear-gradient(to left, transparent, var(--gold)); }
+        .hr-ornament span { color: var(--gold); font-size: 0.75em; letter-spacing: 0.5em; }
 
-        /* ─── ПАНЕЛЬ УПРАВЛЕНИЯ ─── */
+        /* ═══════════════════════════════════════
+           CONTROLS BAR
+        ═══════════════════════════════════════ */
         .controls {
             position: relative; z-index: 100;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+            display: flex; flex-wrap: wrap; gap: 8px;
             justify-content: center;
             padding: 0 24px 36px;
         }
 
         .btn {
             font-family: var(--font-display);
-            font-size: 0.72em;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            border: 1px solid var(--border-accent);
+            font-size: 0.68em; font-weight: 700;
+            letter-spacing: 0.09em; text-transform: uppercase;
+            border: 1px solid var(--border-gold);
             background: var(--surface);
             color: var(--text1);
-            padding: 11px 22px;
-            border-radius: var(--radius-sm);
+            padding: 10px 20px;
+            border-radius: var(--rs);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.15s, box-shadow 0.18s;
             backdrop-filter: blur(8px);
-            position: relative;
-            overflow: hidden;
+            position: relative; overflow: hidden;
+            white-space: nowrap;
         }
         .btn::after {
             content: '';
             position: absolute; inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent);
             pointer-events: none;
         }
         .btn:hover {
             background: var(--surface-hover);
-            border-color: rgba(201,168,76,0.5);
+            border-color: rgba(201,168,76,0.6);
             color: var(--gold-light);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
-        .btn:active { transform: translateY(0); }
+        .btn:active { transform: translateY(0); box-shadow: none; }
 
         .btn-primary {
-            background: linear-gradient(135deg, rgba(124,92,191,0.25), rgba(61,191,184,0.15));
-            border-color: rgba(160,125,224,0.4);
+            background: linear-gradient(135deg, rgba(124,92,191,0.22), rgba(61,191,184,0.12));
+            border-color: rgba(160,125,224,0.45);
         }
-        .btn-danger {
-            border-color: rgba(191,76,76,0.3);
-        }
-        .btn-danger:hover {
-            color: var(--red-light);
-            border-color: rgba(191,76,76,0.6);
-        }
+        .btn-danger { border-color: rgba(191,76,76,0.35); }
+        .btn-danger:hover { color: var(--red-l); border-color: rgba(191,76,76,0.65); }
 
         .score-select {
             font-family: var(--font-display);
-            font-size: 0.72em;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            background: var(--surface);
-            border: 1px solid var(--border-accent);
-            color: var(--text1);
-            padding: 11px 16px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            outline: none;
-            transition: border-color 0.2s;
+            font-size: 0.68em; font-weight: 700; letter-spacing: 0.09em;
+            background: var(--surface); border: 1px solid var(--border-gold);
+            color: var(--text1); padding: 10px 14px;
+            border-radius: var(--rs); cursor: pointer;
+            backdrop-filter: blur(8px); outline: none;
+            transition: border-color 0.18s;
         }
-        .score-select:hover { border-color: rgba(201,168,76,0.5); }
+        .score-select:hover { border-color: rgba(201,168,76,0.6); }
         .score-select option { background: var(--bg2); }
 
-        /* Дропдаун экспорта */
+        /* Export dropdown */
         .export-wrap { position: relative; }
         .export-menu {
             display: none;
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            min-width: 260px;
+            position: absolute; top: calc(100% + 8px); left: 0;
+            min-width: 270px;
             background: var(--bg2);
-            border: 1px solid var(--border-accent);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            z-index: 1000;
-            overflow: hidden;
-            animation: menuIn 0.18s ease;
+            border: 1px solid var(--border-gold);
+            border-radius: var(--r);
+            box-shadow: var(--shadow-lg);
+            z-index: 9000; overflow: hidden;
+            animation: menuIn 0.16s ease;
         }
         @keyframes menuIn {
             from { opacity: 0; transform: translateY(-6px); }
@@ -210,598 +221,623 @@
         .export-menu.open { display: block; }
         .export-menu-title {
             font-family: var(--font-display);
-            font-size: 0.65em;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: var(--gold);
-            padding: 10px 16px 8px;
+            font-size: 0.62em; font-weight: 700; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--gold);
+            padding: 9px 16px 7px;
             border-bottom: 1px solid var(--border);
-            background: rgba(201,168,76,0.05);
+            background: rgba(201,168,76,0.06);
         }
         .export-item {
-            padding: 11px 16px;
-            color: var(--text2);
-            cursor: pointer;
-            font-family: var(--font-body);
-            font-size: 0.95em;
-            transition: all 0.15s;
+            padding: 10px 16px;
+            color: var(--text2); cursor: pointer;
+            font-size: 0.92em;
+            transition: background 0.14s, color 0.14s, padding-left 0.14s;
             border-bottom: 1px solid var(--border);
         }
         .export-item:last-child { border-bottom: none; }
-        .export-item:hover {
-            background: var(--surface-hover);
-            color: var(--text1);
-            padding-left: 22px;
-        }
+        .export-item:hover { background: var(--surface-hover); color: var(--text1); padding-left: 22px; }
+        .export-item:empty { display: none; }
 
-        /* ─── РЕДАКТОР МЕТОК ─── */
-        .labels-section {
+        /* ═══════════════════════════════════════
+           GLOBAL AXES EDITOR
+        ═══════════════════════════════════════ */
+        .axes-section {
             position: relative; z-index: 1;
-            max-width: 1100px;
-            margin: 0 auto 40px;
+            max-width: 1100px; margin: 0 auto 36px;
             padding: 0 24px;
         }
         .section-heading {
             font-family: var(--font-display);
-            font-size: 0.8em;
-            font-weight: 700;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--gold);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            font-size: 0.72em; font-weight: 700;
+            letter-spacing: 0.17em; text-transform: uppercase;
+            color: var(--gold); margin-bottom: 14px;
+            display: flex; align-items: center; gap: 12px;
         }
-        .section-heading::before,
-        .section-heading::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(to right, transparent, rgba(201,168,76,0.3));
+        .section-heading::before, .section-heading::after {
+            content: ''; flex: 1; height: 1px;
         }
-        .section-heading::after {
-            background: linear-gradient(to left, transparent, rgba(201,168,76,0.3));
-        }
+        .section-heading::before { background: linear-gradient(to right, transparent, rgba(201,168,76,0.35)); }
+        .section-heading::after  { background: linear-gradient(to left,  transparent, rgba(201,168,76,0.35)); }
 
-        .labels-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
+        .axes-help {
+            font-size: 0.82em; font-style: italic;
+            color: var(--text3); margin-bottom: 12px; text-align: center;
         }
-        .label-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .axes-grid {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            align-items: center; justify-content: center;
         }
-        .label-input {
-            font-family: var(--font-body);
-            font-size: 0.9em;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text1);
-            padding: 7px 12px;
-            border-radius: var(--radius-sm);
-            transition: border-color 0.15s;
-            width: 140px;
-            outline: none;
+        .axis-item {
+            display: flex; align-items: center; gap: 4px;
         }
-        .label-input:focus {
-            border-color: var(--purple-light);
-            background: rgba(255,255,255,0.06);
+        .axis-num {
+            font-family: var(--font-display);
+            font-size: 0.62em; color: var(--gold); opacity: 0.5;
+            min-width: 16px; text-align: right;
         }
-        .label-remove-btn {
-            background: none;
-            border: 1px solid rgba(191,76,76,0.25);
-            color: var(--red);
-            width: 26px; height: 26px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1em;
-            line-height: 1;
+        .axis-input {
+            font-family: var(--font-body); font-size: 0.88em;
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--text1); padding: 7px 12px;
+            border-radius: var(--rs); outline: none; width: 148px;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .axis-input:focus {
+            border-color: var(--purple-l);
+            background: rgba(255,255,255,0.055);
+        }
+        .axis-remove-btn {
+            background: none; border: 1px solid rgba(191,76,76,0.2);
+            color: rgba(191,76,76,0.5);
+            width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+            font-size: 1.1em; line-height: 1;
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.15s;
-            flex-shrink: 0;
+            transition: all 0.14s; flex-shrink: 0;
         }
-        .label-remove-btn:hover {
-            background: rgba(191,76,76,0.15);
-            border-color: var(--red);
+        .axis-remove-btn:hover {
+            background: rgba(191,76,76,0.14); border-color: var(--red);
+            color: var(--red-l);
         }
         .add-axis-btn {
-            font-family: var(--font-display);
-            font-size: 0.65em;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            background: none;
-            border: 1px dashed rgba(201,168,76,0.3);
-            color: var(--gold);
-            padding: 7px 14px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: all 0.15s;
+            font-family: var(--font-display); font-size: 0.62em; font-weight: 700;
+            letter-spacing: 0.1em; background: none;
+            border: 1px dashed rgba(201,168,76,0.28);
+            color: var(--gold); opacity: 0.7;
+            padding: 7px 13px; border-radius: var(--rs); cursor: pointer;
+            transition: all 0.14s;
         }
-        .add-axis-btn:hover {
-            background: rgba(201,168,76,0.06);
-            border-color: rgba(201,168,76,0.6);
-        }
-        .add-axis-btn:disabled {
-            opacity: 0.3; cursor: not-allowed;
-        }
+        .add-axis-btn:hover { opacity: 1; background: rgba(201,168,76,0.07); border-color: rgba(201,168,76,0.6); }
+        .add-axis-btn:disabled { opacity: 0.25; cursor: not-allowed; }
 
-        /* ─── СЕТКА КАРТОЧЕК ─── */
+        /* ═══════════════════════════════════════
+           CARDS GRID
+        ═══════════════════════════════════════ */
         .cards-grid {
             position: relative; z-index: 1;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-            gap: 24px;
-            max-width: 1400px;
-            margin: 0 auto;
+            grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
+            gap: 22px;
+            max-width: 1400px; margin: 0 auto;
             padding: 0 24px 40px;
         }
 
-        /* Пустое состояние */
+        /* Empty state */
         .empty-state {
             grid-column: 1 / -1;
-            text-align: center;
-            padding: 80px 24px;
-            border: 1px dashed rgba(201,168,76,0.2);
-            border-radius: var(--radius);
-            color: var(--text3);
+            text-align: center; padding: 88px 24px;
+            border: 1px dashed rgba(201,168,76,0.18);
+            border-radius: var(--r); color: var(--text3);
         }
-        .empty-state-icon { font-size: 3em; margin-bottom: 16px; opacity: 0.5; }
+        .empty-icon { font-size: 2.6em; margin-bottom: 14px; opacity: 0.45; }
         .empty-state h3 {
-            font-family: var(--font-display);
-            font-size: 0.9em;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--text3);
-            margin-bottom: 8px;
+            font-family: var(--font-display); font-size: 0.85em;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: var(--text3); margin-bottom: 6px;
         }
+        .empty-state p { font-size: 0.9em; }
 
-        /* ─── КАРТОЧКА ПЕРСОНАЖА ─── */
+        /* ═══════════════════════════════════════
+           CHARACTER CARD
+        ═══════════════════════════════════════ */
         .card {
             background: var(--bg1);
             border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 24px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+            border-radius: var(--r);
+            padding: 22px;
+            position: relative; overflow: hidden;
+            box-shadow: var(--shadow-md);
             transition: box-shadow 0.25s, transform 0.25s;
-            animation: cardIn 0.35s ease-out;
+            animation: cardIn 0.32s ease-out both;
         }
         @keyframes cardIn {
-            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+            from { opacity: 0; transform: translateY(14px) scale(0.98); }
             to   { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .card:hover {
-            box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-            transform: translateY(-2px);
-        }
-        /* Полоска-акцент сверху */
+        .card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+        /* Top accent stripe */
         .card::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+        }
+        .card.player-card {
+            border-left: 3px solid rgba(61,191,184,0.55);
         }
         .card.player-card::before {
             background: linear-gradient(90deg, transparent, var(--teal), transparent);
         }
-        .card.dm-card::before {
-            background: linear-gradient(90deg, transparent, var(--purple-light), transparent);
+        .card.dm-card {
+            border-left: 3px solid rgba(124,92,191,0.55);
         }
-        /* Боковая полоска */
-        .card.player-card { border-left: 3px solid rgba(61,191,184,0.5); }
-        .card.dm-card { border-left: 3px solid rgba(124,92,191,0.5); }
+        .card.dm-card::before {
+            background: linear-gradient(90deg, transparent, var(--purple-l), transparent);
+        }
 
-        /* Заголовок карточки */
+        /* Card header */
         .card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 6px;
-            flex-wrap: wrap;
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 8px; flex-wrap: wrap;
         }
         .role-badge {
             font-family: var(--font-display);
-            font-size: 0.6em;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            padding: 5px 10px;
-            border-radius: 4px;
-            flex-shrink: 0;
+            font-size: 0.58em; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            padding: 4px 9px; border-radius: 4px; flex-shrink: 0;
         }
-        .role-badge.player-badge {
-            background: rgba(61,191,184,0.15);
-            border: 1px solid rgba(61,191,184,0.35);
-            color: var(--teal-light);
+        .player-badge {
+            background: rgba(61,191,184,0.14);
+            border: 1px solid rgba(61,191,184,0.38);
+            color: var(--teal-l);
         }
-        .role-badge.dm-badge {
-            background: rgba(124,92,191,0.15);
-            border: 1px solid rgba(124,92,191,0.35);
-            color: var(--purple-light);
+        .dm-badge {
+            background: rgba(124,92,191,0.14);
+            border: 1px solid rgba(124,92,191,0.38);
+            color: var(--purple-l);
         }
         .name-input {
             font-family: var(--font-display);
-            font-size: 1em;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            background: transparent;
-            border: none;
+            font-size: 0.97em; font-weight: 700; letter-spacing: 0.04em;
+            background: transparent; border: none;
             border-bottom: 1px solid transparent;
-            color: var(--text1);
-            flex: 1;
-            padding: 2px 4px;
-            outline: none;
-            transition: border-color 0.15s;
-            min-width: 80px;
+            color: var(--text1); flex: 1; padding: 2px 3px;
+            outline: none; transition: border-color 0.14s;
+            min-width: 70px;
         }
-        .name-input:focus {
-            border-bottom-color: var(--purple-light);
-        }
+        .name-input:focus { border-bottom-color: var(--purple-l); }
 
-        /* Индикатор суммы очков */
         .score-badge {
             font-family: var(--font-display);
-            font-size: 0.65em;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            padding: 4px 10px;
-            border-radius: 12px;
-            background: rgba(201,168,76,0.08);
-            border: 1px solid rgba(201,168,76,0.2);
-            color: var(--gold);
-            white-space: nowrap;
-            flex-shrink: 0;
+            font-size: 0.62em; font-weight: 700; letter-spacing: 0.06em;
+            padding: 3px 9px; border-radius: 12px;
+            background: var(--gold-dim); border: 1px solid rgba(201,168,76,0.22);
+            color: var(--gold); white-space: nowrap; flex-shrink: 0;
         }
 
-        /* Кнопки действий в карточке */
         .card-actions {
-            display: flex;
-            gap: 6px;
-            margin-left: 4px;
-            flex-shrink: 0;
+            display: flex; gap: 5px; margin-left: 2px; flex-shrink: 0;
         }
-        .card-action-btn {
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--text3);
-            width: 28px; height: 28px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 0.85em;
+        .card-btn {
+            background: none; border: 1px solid var(--border);
+            color: var(--text3); width: 26px; height: 26px;
+            border-radius: 50%; cursor: pointer;
+            font-size: 0.82em;
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.15s;
+            transition: all 0.14s;
         }
-        .card-action-btn:hover {
-            border-color: var(--gold);
-            color: var(--gold);
-            background: rgba(201,168,76,0.08);
-        }
-        .card-action-btn.delete:hover {
-            border-color: var(--red);
-            color: var(--red);
-            background: rgba(191,76,76,0.08);
-        }
+        .card-btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+        .card-btn.danger:hover { border-color: var(--red); color: var(--red-l); background: rgba(191,76,76,0.1); }
 
-        /* Цветовой пикер */
-        .color-picker-wrap {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
+        /* Color palette */
+        .color-row {
+            display: flex; align-items: center; gap: 6px;
+            margin: 6px 0 10px; flex-wrap: wrap;
+        }
+        .color-label {
+            font-family: var(--font-display);
+            font-size: 0.58em; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--text3); margin-right: 2px;
         }
         .color-dot {
-            width: 18px; height: 18px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: transform 0.15s, border-color 0.15s;
+            width: 16px; height: 16px; border-radius: 50%;
+            cursor: pointer; border: 2px solid transparent;
+            transition: transform 0.14s, border-color 0.14s;
             flex-shrink: 0;
         }
-        .color-dot:hover { transform: scale(1.2); }
-        .color-dot.active { border-color: white; transform: scale(1.15); }
-        .color-label {
-            font-size: 0.75em;
-            color: var(--text3);
-            font-family: var(--font-display);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            margin-right: 4px;
-        }
+        .color-dot:hover { transform: scale(1.25); }
+        .color-dot.active { border-color: #fff; transform: scale(1.15); }
 
-        /* Диаграмма */
-        .chart-wrap {
-            display: flex;
-            justify-content: center;
-            margin: 16px 0;
-        }
+        /* Chart */
+        .chart-wrap { display: flex; justify-content: center; margin: 14px 0 6px; }
 
-        /* Редактор характеристик */
-        .stats-editor { display: grid; gap: 10px; }
+        /* ── Per-card custom labels toggle ── */
+        .local-labels-toggle {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px; cursor: pointer;
+            font-size: 0.78em; color: var(--text3);
+            user-select: none;
+        }
+        .local-labels-toggle:hover { color: var(--text2); }
+        .toggle-switch {
+            width: 30px; height: 16px; border-radius: 8px;
+            background: var(--bg3); border: 1px solid var(--border);
+            position: relative; flex-shrink: 0;
+            transition: background 0.18s;
+        }
+        .toggle-switch::after {
+            content: ''; position: absolute;
+            top: 2px; left: 2px;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--text3);
+            transition: transform 0.18s, background 0.18s;
+        }
+        .toggle-switch.on { background: var(--purple-dim); border-color: var(--purple); }
+        .toggle-switch.on::after { transform: translateX(14px); background: var(--purple-l); }
+
+        /* Notes field */
+        .notes-textarea {
+            width: 100%; font-family: var(--font-body); font-size: 0.82em;
+            font-style: italic; color: var(--text2);
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--rs); padding: 8px 12px;
+            outline: none; resize: vertical; min-height: 46px;
+            line-height: 1.5; transition: border-color 0.14s;
+            margin-top: 8px;
+        }
+        .notes-textarea::placeholder { color: var(--text3); }
+        .notes-textarea:focus { border-color: rgba(201,168,76,0.4); }
+
+        /* Stats editor */
+        .stats-editor { display: grid; gap: 8px; margin-top: 8px; }
         .stat-row {
             display: grid;
-            grid-template-columns: 1fr 52px 1fr;
-            gap: 10px;
-            align-items: center;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
+            grid-template-columns: 1fr 50px 1fr;
+            gap: 8px; align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.028);
         }
         .stat-row:last-child { border-bottom: none; }
 
         .stat-label-input {
-            font-family: var(--font-body);
-            font-size: 0.85em;
-            font-style: italic;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid transparent;
-            color: var(--text2);
-            padding: 3px 4px;
-            outline: none;
-            transition: border-color 0.15s;
-            width: 100%;
+            font-family: var(--font-body); font-size: 0.84em;
+            font-style: italic; background: transparent;
+            border: none; border-bottom: 1px solid transparent;
+            color: var(--text2); padding: 2px 3px;
+            outline: none; transition: border-color 0.14s, color 0.14s; width: 100%;
         }
-        .stat-label-input:focus {
-            border-bottom-color: rgba(160,125,224,0.4);
-            color: var(--text1);
-        }
+        .stat-label-input:focus { border-bottom-color: rgba(160,125,224,0.4); color: var(--text1); }
+        .stat-label-input.global-label { color: var(--text3); font-style: normal; }
+        .stat-label-input.custom-label { color: var(--purple-l); }
+
         .stat-num-input {
-            font-family: var(--font-display);
-            font-size: 0.85em;
-            font-weight: 700;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text1);
-            padding: 5px 6px;
-            border-radius: var(--radius-sm);
-            text-align: center;
-            outline: none;
-            transition: border-color 0.15s;
-            width: 100%;
+            font-family: var(--font-display); font-size: 0.82em; font-weight: 700;
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--text1); padding: 4px 5px;
+            border-radius: var(--rs); text-align: center;
+            outline: none; transition: border-color 0.14s; width: 100%;
         }
-        .stat-num-input:focus { border-color: var(--purple-light); }
+        .stat-num-input:focus { border-color: var(--purple-l); }
 
         .stat-slider {
-            width: 100%;
-            height: 4px;
-            -webkit-appearance: none;
-            appearance: none;
-            background: var(--bg3);
-            border-radius: 2px;
-            outline: none;
-            cursor: pointer;
+            width: 100%; height: 4px;
+            -webkit-appearance: none; appearance: none;
+            background: var(--bg4); border-radius: 2px;
+            outline: none; cursor: pointer;
         }
         .stat-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 14px; height: 14px;
-            border-radius: 50%;
-            background: var(--purple-light);
-            border: 2px solid white;
-            cursor: pointer;
-            transition: transform 0.15s;
+            width: 13px; height: 13px; border-radius: 50%;
+            background: var(--purple-l);
+            border: 2px solid #fff; cursor: pointer;
+            transition: transform 0.14s;
             box-shadow: 0 1px 4px rgba(0,0,0,0.4);
         }
-        .stat-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+        .stat-slider::-webkit-slider-thumb:hover { transform: scale(1.35); }
         .stat-slider::-moz-range-thumb {
-            width: 14px; height: 14px;
-            border-radius: 50%;
-            background: var(--purple-light);
-            border: 2px solid white;
-            cursor: pointer;
+            width: 13px; height: 13px; border-radius: 50%;
+            background: var(--purple-l); border: 2px solid #fff; cursor: pointer;
         }
 
-        /* ─── СРАВНЕНИЕ ─── */
+        /* ═══════════════════════════════════════
+           COMPARISON SECTION
+        ═══════════════════════════════════════ */
         .comparison {
             position: relative; z-index: 1;
-            max-width: 1100px;
-            margin: 0 auto 60px;
-            padding: 0 24px;
+            max-width: 1100px; margin: 0 auto 60px; padding: 0 24px;
         }
         .comparison-inner {
-            background: var(--bg1);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 36px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+            background: var(--bg1); border: 1px solid var(--border);
+            border-radius: var(--r); padding: 36px;
+            text-align: center; position: relative; overflow: hidden;
         }
         .comparison-inner::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
-            opacity: 0.4;
+            opacity: 0.35;
         }
         .comparison-title {
             font-family: var(--font-display);
-            font-size: 1em;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--text1);
-            margin-bottom: 20px;
+            font-size: 0.95em; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--text1); margin-bottom: 16px;
         }
 
-        .team-score-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
+        /* Team insights row */
+        .team-insights {
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; flex-wrap: wrap; margin-bottom: 18px;
         }
-        .team-score-badge {
+        .insight-badge {
             font-family: var(--font-display);
-            font-size: 0.72em;
-            font-weight: 700;
-            letter-spacing: 0.07em;
-            padding: 6px 16px;
-            border-radius: 14px;
-            background: rgba(201,168,76,0.08);
-            border: 1px solid rgba(201,168,76,0.25);
-            color: var(--gold);
-            white-space: nowrap;
+            font-size: 0.66em; font-weight: 700; letter-spacing: 0.07em;
+            padding: 5px 13px; border-radius: 12px; white-space: nowrap;
         }
-        .team-score-badge.perfect {
-            background: rgba(201,168,76,0.18);
-            border-color: rgba(201,168,76,0.6);
-            color: var(--gold-light);
-            box-shadow: 0 0 12px rgba(201,168,76,0.2);
-        }
-        .team-weak-badge {
-            font-family: var(--font-display);
-            font-size: 0.68em;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            padding: 6px 14px;
-            border-radius: 14px;
-            background: rgba(191,76,76,0.08);
-            border: 1px solid rgba(191,76,76,0.2);
-            color: var(--red-light);
-            white-space: nowrap;
-        }
+        .insight-badge.good  { background: rgba(201,168,76,0.1);  border: 1px solid rgba(201,168,76,0.28); color: var(--gold); }
+        .insight-badge.great { background: rgba(201,168,76,0.2);  border: 1px solid rgba(201,168,76,0.55); color: var(--gold-light); box-shadow: 0 0 10px rgba(201,168,76,0.18); }
+        .insight-badge.warn  { background: rgba(191,76,76,0.1);   border: 1px solid rgba(191,76,76,0.25); color: var(--red-l); }
+        .insight-badge.info  { background: rgba(61,191,184,0.1);  border: 1px solid rgba(61,191,184,0.25); color: var(--teal-l); }
 
+        /* Toggles */
         .toggles {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            margin-bottom: 24px;
+            display: flex; flex-wrap: wrap; gap: 7px;
+            justify-content: center; margin-bottom: 20px;
         }
         .toggle-chip {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.15s;
-            font-family: var(--font-body);
-            font-size: 0.9em;
-            color: var(--text2);
+            display: flex; align-items: center; gap: 7px;
+            padding: 5px 12px; border-radius: 18px;
+            background: var(--surface); border: 1px solid var(--border);
+            cursor: pointer; user-select: none;
+            transition: all 0.14s; font-size: 0.88em; color: var(--text2);
         }
         .toggle-chip:hover { background: var(--surface-hover); color: var(--text1); }
-        .toggle-chip input { accent-color: var(--purple-light); margin: 0; }
-
-        /* ─── АДАПТИВ ─── */
-        @media (max-width: 700px) {
-            .header { padding: 36px 16px 28px; }
-            .controls { padding: 0 16px 24px; gap: 8px; }
-            .btn, .score-select { font-size: 0.65em; padding: 9px 14px; }
-            .cards-grid { grid-template-columns: 1fr; padding: 0 16px 32px; }
-            .card { padding: 18px; }
-            .comparison { padding: 0 16px; }
-            .comparison-inner { padding: 24px 16px; }
-            .labels-section { padding: 0 16px; }
-            .stat-row { grid-template-columns: 1fr 44px 1fr; }
+        .toggle-chip input { accent-color: var(--purple-l); margin: 0; }
+        .color-pip {
+            width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
         }
 
-        /* Скроллбар */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg0); }
-        ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--purple); }
-
-        ::selection { background: rgba(124,92,191,0.35); color: var(--text1); }
-
-        /* Уведомление */
+        /* ═══════════════════════════════════════
+           TOAST NOTIFICATION
+        ═══════════════════════════════════════ */
+        #toast-container {
+            position: fixed; bottom: 24px; right: 24px;
+            display: flex; flex-direction: column; gap: 8px;
+            z-index: 99999;
+        }
         .toast {
-            position: fixed;
-            bottom: 24px; right: 24px;
-            background: var(--bg2);
-            border: 1px solid var(--border-accent);
-            color: var(--text1);
-            font-family: var(--font-body);
-            font-size: 0.95em;
-            padding: 12px 20px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            z-index: 9999;
-            animation: toastIn 0.25s ease;
+            background: var(--bg2); border: 1px solid var(--border-gold);
+            color: var(--text1); font-family: var(--font-body);
+            font-size: 0.9em; padding: 11px 18px;
+            border-radius: var(--r); box-shadow: var(--shadow-lg);
+            animation: toastIn 0.22s ease;
             max-width: 300px;
         }
+        .toast.success { border-color: rgba(76,191,119,0.45); }
+        .toast.error   { border-color: rgba(191,76,76,0.45); }
         @keyframes toastIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(8px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
         }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to   { opacity: 0; transform: translateY(4px) scale(0.97); }
+        }
+
+        /* ═══════════════════════════════════════
+           EXPORT PROGRESS OVERLAY
+        ═══════════════════════════════════════ */
+        #export-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+            z-index: 88888; align-items: center; justify-content: center;
+        }
+        #export-overlay.active { display: flex; }
+        .export-progress-box {
+            background: var(--bg2); border: 1px solid var(--border-gold);
+            border-radius: var(--r); padding: 32px 40px;
+            text-align: center; min-width: 260px;
+            box-shadow: var(--shadow-lg);
+        }
+        .export-spinner {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 3px solid rgba(201,168,76,0.2);
+            border-top-color: var(--gold);
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 14px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .export-progress-text {
+            font-family: var(--font-display); font-size: 0.75em;
+            letter-spacing: 0.1em; color: var(--gold);
+        }
+
+        /* ═══════════════════════════════════════
+           RESPONSIVE
+        ═══════════════════════════════════════ */
+        @media (max-width: 700px) {
+            .header { padding: 38px 16px 28px; }
+            .controls { padding: 0 16px 22px; gap: 6px; }
+            .btn, .score-select { font-size: 0.62em; padding: 8px 12px; }
+            .cards-grid { grid-template-columns: 1fr; padding: 0 14px 28px; }
+            .card { padding: 16px; }
+            .comparison { padding: 0 14px; }
+            .comparison-inner { padding: 22px 14px; }
+            .axes-section { padding: 0 14px; }
+            .stat-row { grid-template-columns: 1fr 44px 1fr; gap: 6px; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg0); }
+        ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--purple); }
+
+        ::selection { background: rgba(124,92,191,0.32); color: var(--text1); }
+
+        /* ── Stylized delete ── */
+        .card-btn.confirming {
+            background: rgba(191,76,76,0.25) !important;
+            border-color: var(--red) !important;
+            color: var(--red-l) !important;
+            animation: btnPulse 0.6s ease infinite alternate;
+        }
+        @keyframes btnPulse {
+            from { box-shadow: 0 0 0 0 rgba(191,76,76,0.4); }
+            to   { box-shadow: 0 0 0 5px rgba(191,76,76,0); }
+        }
+        .card.deleting {
+            border-color: rgba(191,76,76,0.5) !important;
+            box-shadow: 0 0 0 2px rgba(191,76,76,0.2), var(--shadow-md) !important;
+            animation: cardShake 0.35s ease;
+        }
+        @keyframes cardShake {
+            0%,100% { transform: translateX(0); }
+            20%  { transform: translateX(-6px); }
+            40%  { transform: translateX(5px); }
+            60%  { transform: translateX(-4px); }
+            80%  { transform: translateX(3px); }
+        }
+        .card.card-exit {
+            animation: cardExit 0.3s ease forwards;
+            pointer-events: none;
+        }
+        @keyframes cardExit {
+            from { opacity: 1; transform: scale(1); }
+            to   { opacity: 0; transform: scale(0.9) translateY(10px); }
+        }
+
+        /* ── Emoji picker ── */
+        .emoji-btn {
+            background: none; border: none;
+            font-size: 1.3em; cursor: pointer;
+            line-height: 1; padding: 0 4px 0 0;
+            transition: transform 0.15s;
+            flex-shrink: 0;
+        }
+        .emoji-btn:hover { transform: scale(1.2); }
+        .emoji-picker-wrap { position: relative; }
+        .emoji-dropdown {
+            display: none; position: absolute;
+            top: calc(100% + 6px); left: 0; z-index: 500;
+            background: var(--bg2); border: 1px solid var(--border-gold);
+            border-radius: var(--r); padding: 8px;
+            box-shadow: var(--shadow-lg);
+            width: 320px; overflow: hidden;
+            animation: menuIn 0.16s ease;
+        }
+        .emoji-dropdown.open { display: grid; grid-template-columns: repeat(8, 36px); gap: 2px; justify-content: start; }
+        .emoji-option {
+            font-size: 1.15em; cursor: pointer; text-align: center;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 4px;
+            transition: background 0.12s, transform 0.12s;
+            user-select: none;
+        }
+        .emoji-option:hover { background: var(--surface-hover); transform: scale(1.2); }
+
+        /* Print / export helpers */
+        .no-export { /* hidden during capture */ }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div class="header-ornament">⸻ Letum non omnia finit ⸻</div>
+<!-- ─── HEADER ─── -->
+<header class="header">
+    <span class="header-kicker">⸻ Letum non omnia finit ⸻</span>
     <h1>⚔ RPG Team Profiler</h1>
-    <p class="header-sub">Визуализация характеристик вашей НРИ-команды</p>
-</div>
+    <p class="header-sub">Визуализация и сравнение характеристик НРИ-команды</p>
+    <div class="hr-ornament"><span>✦</span></div>
+</header>
 
-<div class="controls">
-    <button class="btn btn-primary" onclick="addPlayer()">➕ Игрок</button>
-    <button class="btn btn-primary" onclick="addDM()">🎭 Мастер</button>
-    <button class="btn btn-danger" onclick="resetAll()">🔄 Сбросить</button>
-    <button class="btn" onclick="saveToURL()">🔗 Поделиться</button>
-    <select class="score-select" id="score-system" onchange="changeScoreSystem(this.value)">
+<!-- ─── CONTROLS ─── -->
+<nav class="controls" aria-label="Управление">
+    <button class="btn btn-primary" onclick="App.addPlayer()">➕ Игрок</button>
+    <button class="btn btn-primary" onclick="App.addDM()">🎭 Мастер</button>
+    <button class="btn btn-danger"  onclick="App.resetAll()">🔄 Сбросить</button>
+    <button class="btn"             onclick="App.share()">🔗 Поделиться</button>
+    <button class="btn"             onclick="App.exportJSON()">📥 Сохранить JSON</button>
+    <label  class="btn"             style="cursor:pointer" title="Загрузить JSON">
+        📤 Загрузить JSON
+        <input type="file" accept=".json" style="display:none" onchange="App.importJSON(event)">
+    </label>
+    <select class="score-select" id="score-system" onchange="App.changeScoreSystem(this.value)">
         <option value="0-10">0 – 10</option>
         <option value="-5-5">−5 … +5</option>
     </select>
     <div class="export-wrap">
-        <button class="btn" onclick="toggleExportMenu(event)">💾 Экспорт PNG ▾</button>
+        <button class="btn" onclick="UI.toggleExportMenu(event)">💾 Экспорт PNG ▾</button>
         <div class="export-menu" id="export-menu">
             <div class="export-menu-title">Индивидуальные</div>
-            <div id="individual-exports"></div>
-            <div class="export-menu-title">Командные</div>
-            <div class="export-item" onclick="exportComparison()">📊 Сравнительная диаграмма</div>
-            <div class="export-item" onclick="exportAllCharts()">📦 Все (ZIP-архив)</div>
+            <div id="export-individual"></div>
+            <div class="export-menu-title">Команда</div>
+            <div class="export-item" onclick="Exporter.comparison()">📊 Сравнительная диаграмма</div>
+            <div class="export-item" onclick="Exporter.allZip()">📦 Все (ZIP-архив)</div>
         </div>
     </div>
-</div>
+</nav>
 
-<div class="labels-section">
-    <div class="section-heading">Оси характеристик</div>
-    <div class="labels-grid" id="labels-grid"></div>
-</div>
+<!-- ─── GLOBAL AXES EDITOR ─── -->
+<section class="axes-section" aria-label="Оси характеристик">
+    <div class="section-heading">Оси характеристик (сравнение)</div>
+    <p class="axes-help">Названия ниже используются в <strong>Сравнении команды</strong>. В карточках можно задать свои названия.</p>
+    <div class="axes-grid" id="axes-grid"></div>
+</section>
 
-<div class="cards-grid" id="cards-grid"></div>
+<!-- ─── CARDS ─── -->
+<main class="cards-grid" id="cards-grid" aria-label="Карточки персонажей"></main>
 
-<div class="comparison">
-    <div class="comparison-inner">
+<!-- ─── COMPARISON ─── -->
+<section class="comparison" aria-label="Сравнение команды">
+    <div class="comparison-inner" id="comparison-inner">
         <div class="comparison-title">📊 Сравнение команды</div>
-        <div class="team-score-row" id="team-score-row"></div>
-        <div class="toggles" id="char-toggles"></div>
+        <div class="team-insights" id="team-insights"></div>
+        <div class="toggles no-export" id="char-toggles"></div>
         <div style="display:flex;justify-content:center;">
-            <div id="comparison-chart" style="width:400px;height:400px;"></div>
+            <div id="comparison-chart" style="width:420px;height:420px;"></div>
         </div>
     </div>
+</section>
+
+<!-- ─── EXPORT OVERLAY ─── -->
+<div id="export-overlay">
+    <div class="export-progress-box">
+        <div class="export-spinner"></div>
+        <div class="export-progress-text" id="export-progress-text">Подготовка…</div>
+    </div>
 </div>
+
+<!-- ─── TOAST CONTAINER ─── -->
+<div id="toast-container" aria-live="polite"></div>
 
 <script>
-    // ══════════════════════════════════════
-    //  КОНСТАНТЫ
-    // ══════════════════════════════════════
-    const PALETTE = [
-        { bg: 'rgba(61,191,184,0.25)',  border: '#3dbfb8' },
-        { bg: 'rgba(191,76,76,0.25)',   border: '#bf4c4c' },
-        { bg: 'rgba(124,92,191,0.25)', border: '#7c5cbf' },
-        { bg: 'rgba(201,168,76,0.25)', border: '#c9a84c' },
-        { bg: 'rgba(76,191,119,0.25)', border: '#4cbf77' },
-        { bg: 'rgba(191,130,76,0.25)', border: '#bf824c' },
-        { bg: 'rgba(76,130,191,0.25)', border: '#4c82bf' },
-        { bg: 'rgba(191,76,160,0.25)', border: '#bf4ca0' },
-    ];
+    /* ═══════════════════════════════════════════════════════
+       CONSTANTS
+    ═══════════════════════════════════════════════════════ */
+    const STORAGE_KEY = 'rpg-profiler-v3';
     const MAX_AXES = 8;
     const MIN_AXES = 3;
-    const STORAGE_KEY = 'rpg-profiler-v2';
+    const MAX_CHARS = 12;
 
-    // ══════════════════════════════════════
-    //  СОСТОЯНИЕ
-    // ══════════════════════════════════════
-    let state = {
+    const PALETTE = [
+        { bg: 'rgba(61,191,184,0.22)',  border: '#3dbfb8' },  // teal
+        { bg: 'rgba(191,76,76,0.22)',   border: '#bf4c4c' },  // red
+        { bg: 'rgba(124,92,191,0.22)',  border: '#7c5cbf' },  // purple
+        { bg: 'rgba(201,168,76,0.22)',  border: '#c9a84c' },  // gold
+        { bg: 'rgba(76,191,119,0.22)',  border: '#4cbf77' },  // green
+        { bg: 'rgba(191,130,76,0.22)',  border: '#bf824c' },  // orange
+        { bg: 'rgba(76,130,191,0.22)',  border: '#4c82bf' },  // blue
+        { bg: 'rgba(191,76,160,0.22)',  border: '#bf4ca0' },  // pink
+    ];
+
+    /* ═══════════════════════════════════════════════════════
+       STATE
+       axes      — global axis names (used in comparison chart)
+       characters — array of character objects:
+         { id, name, role, stats[], localAxes[]|null, color, notes, colorIdx }
+         localAxes = null  → use global axes
+         localAxes = [...] → per-card overrides (only affects this card's chart)
+       visibleIds — Set of ids shown in comparison chart
+    ═══════════════════════════════════════════════════════ */
+    const state = {
         characters: [],
         axes: ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'],
         scoreSystem: '0-10',
@@ -809,434 +845,112 @@
         visibleIds: new Set(),
     };
 
-    // Экземпляры Chart.js
-    const charts = {};          // { id: Chart }
-    let compChart = null;
+    /* ═══════════════════════════════════════════════════════
+       CHART REGISTRY
+    ═══════════════════════════════════════════════════════ */
+    const Charts = (() => {
+        const reg = {};      // id -> Chart instance
+        let compChart = null;
 
-    // ══════════════════════════════════════
-    //  СОХРАНЕНИЕ / ЗАГРУЗКА
-    // ══════════════════════════════════════
-    function saveToStorage() {
-        const data = {
-            characters: state.characters,
-            axes: state.axes,
-            scoreSystem: state.scoreSystem,
-            nextId: state.nextId,
-            visibleIds: [...state.visibleIds],
-        };
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
-    }
-
-    function loadFromStorage() {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return false;
-            const data = JSON.parse(raw);
-            state.characters = data.characters || [];
-            state.axes = data.axes || state.axes;
-            state.scoreSystem = data.scoreSystem || '0-10';
-            state.nextId = data.nextId || state.characters.length + 1;
-            state.visibleIds = new Set(data.visibleIds || state.characters.map(c => c.id));
-            return true;
-        } catch { return false; }
-    }
-
-    // ══════════════════════════════════════
-    //  ВСПОМОГАТЕЛЬНЫЕ
-    // ══════════════════════════════════════
-    function getMinMax() {
-        return state.scoreSystem === '0-10'
-            ? { min: 0, max: 10 }
-            : { min: -5, max: 5 };
-    }
-
-    function clamp(v, min, max) {
-        return Math.max(min, Math.min(max, v));
-    }
-
-    function getColor(index) {
-        return PALETTE[index % PALETTE.length];
-    }
-
-    function defaultStats() {
-        const { min, max } = getMinMax();
-        const mid = Math.round((min + max) / 2);
-        return state.axes.map(() => mid);
-    }
-
-    function randomStats() {
-        const { min, max } = getMinMax();
-        return state.axes.map(() => Math.round(min + Math.random() * (max - min)));
-    }
-
-    function scoreSum(stats) {
-        return stats.reduce((a, b) => a + b, 0);
-    }
-
-    function toast(msg) {
-        const el = document.createElement('div');
-        el.className = 'toast';
-        el.textContent = msg;
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), 2800);
-    }
-
-    // ══════════════════════════════════════
-    //  ДОБАВЛЕНИЕ / УДАЛЕНИЕ ПЕРСОНАЖЕЙ
-    // ══════════════════════════════════════
-    function addPlayer() {
-        const color = getColor(state.characters.filter(c => c.role === 'player').length);
-        const ch = {
-            id: state.nextId++,
-            name: 'Новый игрок',
-            role: 'player',
-            stats: defaultStats(),
-            color,
-        };
-        state.characters.push(ch);
-        state.visibleIds.add(ch.id);
-        renderCard(ch);
-        updateCompChart();
-        updateToggles();
-        updateExportMenu();
-        saveToStorage();
-    }
-
-    function addDM() {
-        const color = PALETTE[6]; // синий тон для ДМ
-        const ch = {
-            id: state.nextId++,
-            name: 'Мастер',
-            role: 'dm',
-            stats: defaultStats(),
-            color,
-        };
-        state.characters.push(ch);
-        state.visibleIds.add(ch.id);
-        renderCard(ch);
-        updateCompChart();
-        updateToggles();
-        updateExportMenu();
-        saveToStorage();
-    }
-
-    function deleteCharacter(id) {
-        if (!confirm('Удалить персонажа?')) return;
-        state.characters = state.characters.filter(c => c.id !== id);
-        state.visibleIds.delete(id);
-        if (charts[id]) { charts[id].destroy(); delete charts[id]; }
-        const card = document.getElementById(`card-${id}`);
-        if (card) card.remove();
-        showEmptyIfNeeded();
-        updateCompChart();
-        updateToggles();
-        updateExportMenu();
-        saveToStorage();
-    }
-
-    function showEmptyIfNeeded() {
-        const grid = document.getElementById('cards-grid');
-        const existing = grid.querySelector('.empty-state');
-        if (state.characters.length === 0 && !existing) {
-            grid.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">⚔️</div>
-        <h3>Команда пуста</h3>
-        <p>Добавьте игроков или мастера выше</p>
-      </div>`;
-        } else if (state.characters.length > 0 && existing) {
-            existing.remove();
+        function _opts() {
+            const { min, max } = _minmax();
+            return {
+                responsive: false,
+                animation: { duration: 450, easing: 'easeOutCubic' },
+                scales: {
+                    r: {
+                        beginAtZero: state.scoreSystem === '0-10',
+                        min, max,
+                        ticks: {
+                            stepSize: 2, backdropColor: 'transparent',
+                            color: 'rgba(255,255,255,0.4)', font: { size: 10 },
+                        },
+                        pointLabels: {
+                            font: { size: 11.5, weight: '600', family: "'Crimson Pro', serif" },
+                            color: '#d8d0c4',
+                        },
+                        grid: { color: 'rgba(255,255,255,0.07)' },
+                        angleLines: { color: 'rgba(255,255,255,0.05)' },
+                    }
+                },
+                plugins: { legend: { display: false } },
+            };
         }
-    }
 
-    // ══════════════════════════════════════
-    //  РЕНДЕР КАРТОЧКИ
-    // ══════════════════════════════════════
-    function renderCard(ch) {
-        const grid = document.getElementById('cards-grid');
-        // Убрать пустое состояние
-        const empty = grid.querySelector('.empty-state');
-        if (empty) empty.remove();
-
-        const { min, max } = getMinMax();
-        const sum = scoreSum(ch.stats);
-        const maxPossible = max * state.axes.length;
-
-        const card = document.createElement('div');
-        card.className = `card ${ch.role}-card`;
-        card.id = `card-${ch.id}`;
-
-        card.innerHTML = `
-    <div class="card-header">
-      <span class="role-badge ${ch.role}-badge">${ch.role === 'dm' ? '🎭 Мастер' : '🎲 Игрок'}</span>
-      <input class="name-input" type="text" value="${escHtml(ch.name)}"
-        onchange="updateName(${ch.id}, this.value)">
-      <span class="score-badge" id="score-badge-${ch.id}">Σ ${sum} / ${maxPossible}</span>
-      <div class="card-actions">
-        <button class="card-action-btn" title="Рандомизировать" onclick="randomizeChar(${ch.id})">🎲</button>
-        <button class="card-action-btn delete" title="Удалить" onclick="deleteCharacter(${ch.id})">✕</button>
-      </div>
-    </div>
-
-    <div class="color-picker-wrap" id="color-picker-${ch.id}">
-      <span class="color-label">Цвет:</span>
-      ${PALETTE.map((p, i) => `
-        <div class="color-dot ${p.border === ch.color.border ? 'active' : ''}"
-          style="background:${p.border};"
-          onclick="updateColor(${ch.id}, ${i})"
-          title="${p.border}"></div>
-      `).join('')}
-    </div>
-
-    <div class="chart-wrap">
-      <div id="chart-${ch.id}" style="width:340px;height:340px;"></div>
-    </div>
-
-    <div class="stats-editor" id="stats-editor-${ch.id}">
-      ${renderStatRows(ch)}
-    </div>
-  `;
-
-        grid.appendChild(card);
-        drawChart(ch);
-    }
-
-    function renderStatRows(ch) {
-        const { min, max } = getMinMax();
-        return ch.stats.map((val, i) => `
-    <div class="stat-row">
-      <input class="stat-label-input" type="text" value="${escHtml(state.axes[i])}"
-        placeholder="Ось ${i+1}"
-        onchange="updateAxis(${i}, this.value)">
-      <input class="stat-num-input" type="number" min="${min}" max="${max}" value="${val}"
-        onchange="updateStat(${ch.id}, ${i}, +this.value)"
-        oninput="syncSlider(${ch.id}, ${i}, +this.value)">
-      <input class="stat-slider" type="range" min="${min}" max="${max}" value="${val}"
-        oninput="updateStat(${ch.id}, ${i}, +this.value)">
-    </div>
-  `).join('');
-    }
-
-    function rebuildStatRows(ch) {
-        const editor = document.getElementById(`stats-editor-${ch.id}`);
-        if (editor) editor.innerHTML = renderStatRows(ch);
-    }
-
-    function escHtml(str) {
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    // ══════════════════════════════════════
-    //  ОБНОВЛЕНИЕ СОСТОЯНИЯ
-    // ══════════════════════════════════════
-    function updateName(id, value) {
-        const ch = state.characters.find(c => c.id === id);
-        if (!ch) return;
-        ch.name = value.trim() || 'Без имени';
-        if (charts[id]) {
-            charts[id].data.datasets[0].label = ch.name;
-            charts[id].update();
+        function _minmax() {
+            return state.scoreSystem === '0-10'
+                ? { min: 0, max: 10 }
+                : { min: -5, max: 5 };
         }
-        updateCompChart();
-        updateToggles();
-        updateExportMenu();
-        saveToStorage();
-    }
 
-    function updateColor(id, paletteIndex) {
-        const ch = state.characters.find(c => c.id === id);
-        if (!ch) return;
-        ch.color = PALETTE[paletteIndex];
-        // Обновить активный цвет-дот
-        const wrap = document.getElementById(`color-picker-${id}`);
-        if (wrap) {
-            wrap.querySelectorAll('.color-dot').forEach((d, i) => {
-                d.classList.toggle('active', i === paletteIndex);
+        function draw(ch) {
+            const container = document.getElementById(`chart-${ch.id}`);
+            if (!container) return;
+            if (reg[ch.id]) { reg[ch.id].destroy(); delete reg[ch.id]; }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 340; canvas.height = 340;
+            container.innerHTML = '';
+            container.appendChild(canvas);
+
+            const labels = (ch.localAxes && ch.localAxes.length === state.axes.length)
+                ? ch.localAxes
+                : [...state.axes];
+
+            reg[ch.id] = new Chart(canvas.getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: ch.name,
+                        data: [...ch.stats],
+                        backgroundColor: ch.color.bg,
+                        borderColor: ch.color.border,
+                        borderWidth: 2,
+                        pointBackgroundColor: ch.color.border,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                    }]
+                },
+                options: _opts(),
             });
         }
-        redrawChart(ch);
-        updateCompChart();
-        saveToStorage();
-    }
 
-    function updateStat(id, idx, rawVal) {
-        const { min, max } = getMinMax();
-        const val = clamp(isNaN(rawVal) ? 0 : rawVal, min, max);
-        const ch = state.characters.find(c => c.id === id);
-        if (!ch) return;
-        ch.stats[idx] = val;
-        // Синхронизировать поля ввода
-        const editor = document.getElementById(`stats-editor-${id}`);
-        if (editor) {
-            const rows = editor.querySelectorAll('.stat-row');
-            if (rows[idx]) {
-                rows[idx].querySelector('.stat-num-input').value = val;
-                rows[idx].querySelector('.stat-slider').value = val;
-            }
-        }
-        // Обновить значок суммы
-        const badge = document.getElementById(`score-badge-${id}`);
-        if (badge) {
-            const maxP = max * state.axes.length;
-            badge.textContent = `Σ ${scoreSum(ch.stats)} / ${maxP}`;
-        }
-        // Обновить диаграмму
-        if (charts[id]) {
-            charts[id].data.datasets[0].data = [...ch.stats];
-            charts[id].update();
-        }
-        updateCompChart();
-        saveToStorage();
-    }
-
-    function syncSlider(id, idx, val) {
-        // Вызывается из number-input, синхронизирует слайдер
-        updateStat(id, idx, val);
-    }
-
-    function updateAxis(axisIdx, value) {
-        state.axes[axisIdx] = value.trim() || `Ось ${axisIdx + 1}`;
-        // Обновить метки на всех диаграммах
-        Object.entries(charts).forEach(([id, chart]) => {
-            chart.data.labels = [...state.axes];
+        function update(ch) {
+            const chart = reg[ch.id];
+            if (!chart) { draw(ch); return; }
+            const labels = (ch.localAxes && ch.localAxes.length === state.axes.length)
+                ? ch.localAxes
+                : [...state.axes];
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = [...ch.stats];
+            chart.data.datasets[0].label = ch.name;
+            chart.data.datasets[0].backgroundColor = ch.color.bg;
+            chart.data.datasets[0].borderColor = ch.color.border;
+            chart.data.datasets[0].pointBackgroundColor = ch.color.border;
             chart.update();
-        });
-        if (compChart) {
-            compChart.data.labels = [...state.axes];
-            compChart.update();
-        }
-        // Синхронизировать заголовки глобального редактора и карточек
-        syncAllAxisLabels();
-        renderLabelsEditor();
-        saveToStorage();
-    }
-
-    function syncAllAxisLabels() {
-        // Синхронизировать input'ы внутри карточек с state.axes
-        state.characters.forEach(ch => {
-            const editor = document.getElementById(`stats-editor-${ch.id}`);
-            if (!editor) return;
-            editor.querySelectorAll('.stat-label-input').forEach((inp, i) => {
-                if (i < state.axes.length) inp.value = state.axes[i];
-            });
-        });
-    }
-
-    function randomizeChar(id) {
-        const ch = state.characters.find(c => c.id === id);
-        if (!ch) return;
-        ch.stats = randomStats();
-        rebuildStatRows(ch);
-        redrawChart(ch);
-        updateCompChart();
-        const { max } = getMinMax();
-        const badge = document.getElementById(`score-badge-${id}`);
-        if (badge) badge.textContent = `Σ ${scoreSum(ch.stats)} / ${max * state.axes.length}`;
-        saveToStorage();
-    }
-
-    // ══════════════════════════════════════
-    //  ДИАГРАММЫ
-    // ══════════════════════════════════════
-    function chartOptions() {
-        const { min, max } = getMinMax();
-        return {
-            responsive: false,
-            animation: { duration: 500, easing: 'easeOutCubic' },
-            scales: {
-                r: {
-                    beginAtZero: state.scoreSystem === '0-10',
-                    min, max,
-                    ticks: {
-                        stepSize: 2,
-                        backdropColor: 'transparent',
-                        color: 'rgba(255,255,255,0.45)',
-                        font: { size: 10 },
-                    },
-                    pointLabels: {
-                        font: { size: 11, weight: 'bold', family: "'Crimson Pro', serif" },
-                        color: '#e0d8cc',
-                    },
-                    grid: { color: 'rgba(255,255,255,0.08)' },
-                    angleLines: { color: 'rgba(255,255,255,0.06)' },
-                }
-            },
-            plugins: { legend: { display: false } },
-        };
-    }
-
-    function drawChart(ch) {
-        const container = document.getElementById(`chart-${ch.id}`);
-        if (!container) return;
-        if (charts[ch.id]) { charts[ch.id].destroy(); delete charts[ch.id]; }
-        const canvas = document.createElement('canvas');
-        canvas.width = 340; canvas.height = 340;
-        container.innerHTML = '';
-        container.appendChild(canvas);
-        charts[ch.id] = new Chart(canvas.getContext('2d'), {
-            type: 'radar',
-            data: {
-                labels: [...state.axes],
-                datasets: [{
-                    label: ch.name,
-                    data: [...ch.stats],
-                    backgroundColor: ch.color.bg,
-                    borderColor: ch.color.border,
-                    borderWidth: 2,
-                    pointBackgroundColor: ch.color.border,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                }]
-            },
-            options: chartOptions(),
-        });
-    }
-
-    function redrawChart(ch) {
-        drawChart(ch);
-    }
-
-    function updateTeamScore() {
-        const row = document.getElementById('team-score-row');
-        if (!row) return;
-
-        const visible = state.characters.filter(c => state.visibleIds.has(c.id));
-        const { max } = getMinMax();
-        const maxPossible = max * state.axes.length;
-
-        if (visible.length === 0) {
-            row.innerHTML = '';
-            return;
         }
 
-        const axisMaxes = state.axes.map((_, i) =>
-            Math.max(...visible.map(c => c.stats[i] ?? 0))
-        );
-        const teamScore = axisMaxes.reduce((a, b) => a + b, 0);
-        const isPerfect = teamScore >= maxPossible;
+        function destroy(id) {
+            if (reg[id]) { reg[id].destroy(); delete reg[id]; }
+        }
 
-        const weakIdx = axisMaxes.indexOf(Math.min(...axisMaxes));
-        const weakLabel = state.axes[weakIdx];
-        const weakVal = axisMaxes[weakIdx];
+        function updateAxes(id) {
+            // Called when global axes change but localAxes is null for this card
+            const ch = state.characters.find(c => c.id === id);
+            if (!ch || ch.localAxes) return; // local override → skip
+            const chart = reg[id];
+            if (chart) { chart.data.labels = [...state.axes]; chart.update(); }
+        }
 
-        row.innerHTML = `
-    <span class="team-score-badge${isPerfect ? ' perfect' : ''}">
-      ${isPerfect ? '✦ ' : ''}Команда: ${teamScore} / ${maxPossible}
-    </span>
-    ${!isPerfect ? `<span class="team-weak-badge">⚠ Слабое место: ${weakLabel} (${weakVal})</span>` : ''}
-  `;
-    }
+        function updateComp() {
+            const container = document.getElementById('comparison-chart');
+            if (!container) return;
+            const { min, max } = _minmax();
+            const visible = state.characters.filter(c => state.visibleIds.has(c.id));
 
-    function updateCompChart() {
-        const container = document.getElementById('comparison-chart');
-        if (!container) return;
-        const { min, max } = getMinMax();
-        const visible = state.characters.filter(c => state.visibleIds.has(c.id));
-
-        if (compChart) {
-            compChart.data.labels = [...state.axes];
-            compChart.data.datasets = visible.map(c => ({
+            const datasets = visible.map(c => ({
                 label: (c.role === 'dm' ? '🎭 ' : '🎲 ') + c.name,
                 data: [...c.stats],
                 backgroundColor: c.color.bg,
@@ -1246,370 +960,1060 @@
                 pointBorderColor: '#fff',
                 pointRadius: 4,
             }));
-            compChart.options.scales.r.min = min;
-            compChart.options.scales.r.max = max;
-            compChart.options.scales.r.beginAtZero = state.scoreSystem === '0-10';
-            compChart.update();
-            updateTeamScore();
-            return;
-        }
 
-        const canvas = document.createElement('canvas');
-        canvas.width = 400; canvas.height = 400;
-        container.innerHTML = '';
-        container.appendChild(canvas);
-
-        compChart = new Chart(canvas.getContext('2d'), {
-            type: 'radar',
-            data: {
-                labels: [...state.axes],
-                datasets: visible.map(c => ({
-                    label: (c.role === 'dm' ? '🎭 ' : '🎲 ') + c.name,
-                    data: [...c.stats],
-                    backgroundColor: c.color.bg,
-                    borderColor: c.color.border,
-                    borderWidth: 2,
-                    pointBackgroundColor: c.color.border,
-                    pointBorderColor: '#fff',
-                    pointRadius: 4,
-                }))
-            },
-            options: {
-                ...chartOptions(),
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            color: '#b8b0a0',
-                            font: { size: 12, family: "'Crimson Pro', serif" },
-                            padding: 16,
-                            usePointStyle: true,
+            if (compChart) {
+                compChart.data.labels = [...state.axes];
+                compChart.data.datasets = datasets;
+                compChart.options.scales.r.min = min;
+                compChart.options.scales.r.max = max;
+                compChart.options.scales.r.beginAtZero = state.scoreSystem === '0-10';
+                compChart.update();
+            } else {
+                const canvas = document.createElement('canvas');
+                canvas.width = 420; canvas.height = 420;
+                container.innerHTML = '';
+                container.appendChild(canvas);
+                compChart = new Chart(canvas.getContext('2d'), {
+                    type: 'radar',
+                    data: { labels: [...state.axes], datasets },
+                    options: {
+                        ..._opts(),
+                        plugins: {
+                            legend: {
+                                display: true, position: 'bottom',
+                                labels: {
+                                    color: '#b0a890', padding: 14, usePointStyle: true,
+                                    font: { size: 11.5, family: "'Crimson Pro', serif" },
+                                }
+                            }
                         }
                     }
+                });
+            }
+        }
+
+        function destroyComp() {
+            if (compChart) { compChart.destroy(); compChart = null; }
+        }
+
+        function getCompCanvas() {
+            return document.getElementById('comparison-chart')?.querySelector('canvas') || null;
+        }
+
+        return { draw, update, destroy, updateAxes, updateComp, destroyComp, getCompCanvas };
+    })();
+
+    /* ═══════════════════════════════════════════════════════
+       STORAGE
+    ═══════════════════════════════════════════════════════ */
+    const Storage = (() => {
+        function save() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    characters: state.characters,
+                    axes: state.axes,
+                    scoreSystem: state.scoreSystem,
+                    nextId: state.nextId,
+                    visibleIds: [...state.visibleIds],
+                }));
+            } catch {}
+        }
+
+        function load() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return false;
+                _apply(JSON.parse(raw));
+                return true;
+            } catch { return false; }
+        }
+
+        function fromURL() {
+            const params = new URLSearchParams(location.search);
+
+            // New compact format: ?t= (deflate + base64url, compact keys)
+            if (params.has('t')) {
+                try {
+                    const b64 = params.get('t').replace(/-/g, '+').replace(/_/g, '/');
+                    const bytes = new Uint8Array([...atob(b64)].map(c => c.charCodeAt(0)));
+                    const compact = JSON.parse(pako.inflate(bytes, { to: 'string' }));
+                    _applyCompact(compact);
+                    return true;
+                } catch (e) {
+                    console.error('URL parse error (compact):', e);
+                    UI.toast('❌ Не удалось загрузить данные из ссылки', 'error');
+                    return false;
                 }
             }
-        });
-        updateTeamScore();
+
+            // Legacy format: ?team= (gzip + base64 + encodeURIComponent)
+            if (params.has('team')) {
+                try {
+                    const bytes = new Uint8Array(
+                        [...atob(decodeURIComponent(params.get('team')))].map(c => c.charCodeAt(0))
+                    );
+                    _apply(JSON.parse(pako.ungzip(bytes, { to: 'string' })));
+                    return true;
+                } catch (e) {
+                    console.error('URL parse error (legacy):', e);
+                    UI.toast('❌ Не удалось загрузить данные из ссылки', 'error');
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        function _applyCompact(c) {
+            _apply({
+                axes: c.a,
+                scoreSystem: c.s === 0 ? '0-10' : '-5-5',
+                nextId: c.n,
+                visibleIds: c.v,
+                characters: c.c.map(o => ({
+                    id: o.i, name: o.nm,
+                    role: o.r === 1 ? 'dm' : 'player',
+                    stats: o.st,
+                    localAxes: o.la || null,
+                    color: PALETTE[o.ci ?? 0],
+                    colorIdx: o.ci ?? 0,
+                    emoji: o.em || '🎲',
+                })),
+            });
+        }
+
+        function _apply(data) {
+            state.characters = (data.characters || []).map(ch => ({
+                ...ch,
+                localAxes: ch.localAxes || null,
+                notes: ch.notes || '',
+                emoji: ch.emoji || '🎲',
+            }));
+            state.axes       = data.axes || state.axes;
+            state.scoreSystem = data.scoreSystem || '0-10';
+            state.nextId     = data.nextId || state.characters.length + 1;
+            state.visibleIds = new Set(data.visibleIds || state.characters.map(c => c.id));
+        }
+
+        function toJSON() {
+            return JSON.stringify({
+                characters: state.characters,
+                axes: state.axes,
+                scoreSystem: state.scoreSystem,
+                nextId: state.nextId,
+                visibleIds: [...state.visibleIds],
+                exportedAt: new Date().toISOString(),
+                version: 3,
+            }, null, 2);
+        }
+
+        function fromJSON(json) {
+            _apply(JSON.parse(json));
+        }
+
+        return { save, load, fromURL, toJSON, fromJSON };
+    })();
+
+    /* ═══════════════════════════════════════════════════════
+       UI HELPERS
+    ═══════════════════════════════════════════════════════ */
+    const UI = (() => {
+        function toast(msg, type = '') {
+            const el = document.createElement('div');
+            el.className = `toast${type ? ' ' + type : ''}`;
+            el.textContent = msg;
+            document.getElementById('toast-container').appendChild(el);
+            setTimeout(() => {
+                el.style.animation = 'toastOut 0.2s ease forwards';
+                setTimeout(() => el.remove(), 200);
+            }, 2600);
+        }
+
+        function esc(s) {
+            return String(s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function clamp(v, min, max) {
+            return Math.max(min, Math.min(max, isNaN(v) ? 0 : v));
+        }
+
+        function minmax() {
+            return state.scoreSystem === '0-10' ? { min: 0, max: 10 } : { min: -5, max: 5 };
+        }
+
+        function midVal() {
+            const { min, max } = minmax();
+            return Math.round((min + max) / 2);
+        }
+
+        function sum(arr) { return arr.reduce((a, b) => a + b, 0); }
+
+        function toggleExportMenu(e) {
+            e.stopPropagation();
+            document.getElementById('export-menu').classList.toggle('open');
+        }
+
+        function closeExportMenu() {
+            document.getElementById('export-menu').classList.remove('open');
+        }
+
+        function showOverlay(msg = 'Подготовка…') {
+            document.getElementById('export-progress-text').textContent = msg;
+            document.getElementById('export-overlay').classList.add('active');
+        }
+
+        function hideOverlay() {
+            document.getElementById('export-overlay').classList.remove('active');
+        }
+
+        function buildEmojiDropdown(charId) {
+            const drop = document.getElementById(`emoji-drop-${charId}`);
+            if (!drop) return;
+            drop.innerHTML = '';
+            EMOJIS.forEach(e => {
+                const span = document.createElement('span');
+                span.className = 'emoji-option';
+                span.textContent = e;
+                span.onclick = (ev) => {
+                    ev.stopPropagation();
+                    App.updateEmoji(charId, e);
+                    drop.classList.remove('open');
+                };
+                drop.appendChild(span);
+            });
+        }
+
+        function toggleEmojiPicker(e, charId) {
+            e.stopPropagation();
+            // Close all other open dropdowns
+            document.querySelectorAll('.emoji-dropdown.open').forEach(d => {
+                if (d.id !== `emoji-drop-${charId}`) d.classList.remove('open');
+            });
+            document.getElementById(`emoji-drop-${charId}`)?.classList.toggle('open');
+        }
+
+        return { toast, esc, clamp, minmax, midVal, sum,
+            toggleExportMenu, closeExportMenu, showOverlay, hideOverlay,
+            buildEmojiDropdown, toggleEmojiPicker };
+    })();
+
+    const EMOJIS = [
+        '🎲','⚔️','🛡️','🗡️','🏹','🪄','🔮','💀',
+        '🐉','🧙','🧝','🧛','🦸','🧟','🐺','🦊',
+        '🌙','⭐','🔥','❄️','⚡','🌿','💎','🗺️',
+        '🎭','👑','🎯','🪖','📜','🍺','🕯️','🪬',
+    ];
+
+
+    const Render = (() => {
+        /* ── Axes editor (global) ── */
+        function axes() {
+            const grid = document.getElementById('axes-grid');
+            grid.innerHTML = '';
+            state.axes.forEach((label, i) => {
+                const item = document.createElement('div');
+                item.className = 'axis-item';
+                item.innerHTML = `
+        <span class="axis-num">${i + 1}.</span>
+        <input class="axis-input" type="text" value="${UI.esc(label)}"
+          placeholder="Ось ${i + 1}"
+          data-idx="${i}"
+          onchange="App.updateGlobalAxis(${i}, this.value)">
+        ${state.axes.length > MIN_AXES
+                    ? `<button class="axis-remove-btn" onclick="App.removeAxis(${i})" title="Удалить ось">−</button>`
+                    : ''}
+      `;
+                grid.appendChild(item);
+            });
+            const addBtn = document.createElement('button');
+            addBtn.className = 'add-axis-btn';
+            addBtn.textContent = '+ Добавить ось';
+            addBtn.disabled = state.axes.length >= MAX_AXES;
+            addBtn.onclick = App.addAxis;
+            grid.appendChild(addBtn);
+        }
+
+        /* ── Single card — appends to grid ── */
+        function card(ch) {
+            const grid = document.getElementById('cards-grid');
+            const empty = grid.querySelector('.empty-state');
+            if (empty) empty.remove();
+            const el = document.createElement('div');
+            el.className = `card ${ch.role}-card`;
+            el.id = `card-${ch.id}`;
+            grid.appendChild(el);
+            cardInto(ch, el);
+        }
+
+        /* ── Render card content into a pre-placed element ── */
+        function cardInto(ch, el) {
+            const { min, max } = UI.minmax();
+            const maxPossible = max * state.axes.length;
+            const s = UI.sum(ch.stats);
+            const hasLocal = !!ch.localAxes;
+
+            el.innerHTML = `
+      <!-- Header -->
+            <div class="card-header">
+            <div class="emoji-picker-wrap no-export">
+            <button class="emoji-btn" id="emoji-btn-${ch.id}"
+            onclick="UI.toggleEmojiPicker(event, ${ch.id})"
+            title="Выбрать эмодзи">${UI.esc(ch.emoji || '🎲')}</button>
+            <div class="emoji-dropdown" id="emoji-drop-${ch.id}"></div>
+            </div>
+            <span class="emoji-export-only" id="emoji-exp-${ch.id}"
+            style="font-size:1.3em;margin-right:4px;display:none;">${UI.esc(ch.emoji || '🎲')}</span>
+            <span class="role-badge ${ch.role}-badge">${ch.role === 'dm' ? 'Мастер' : 'Игрок'}</span>
+            <input class="name-input" type="text" value="${UI.esc(ch.name)}"
+            onchange="App.updateName(${ch.id}, this.value)" placeholder="Имя персонажа">
+            <span class="score-badge" id="sbadge-${ch.id}">Σ ${s} / ${maxPossible}</span>
+            <div class="card-actions no-export">
+            <button class="card-btn" title="Дублировать" onclick="App.duplicateChar(${ch.id})">⧉</button>
+            <button class="card-btn" title="Рандомизировать" onclick="App.randomize(${ch.id})">🎲</button>
+            <button class="card-btn danger" id="del-btn-${ch.id}" title="Удалить (нажмите ещё раз)"
+            onclick="App.deleteChar(${ch.id})">✕</button>
+            </div>
+            </div>
+
+                <!-- Color picker -->
+            <div class="color-row no-export">
+            <span class="color-label">Цвет:</span>
+            ${PALETTE.map((p, i) => `
+          <div class="color-dot ${p.border === ch.color.border ? 'active' : ''}"
+            style="background:${p.border};"
+            onclick="App.updateColor(${ch.id}, ${i})"
+            title="${p.border}"></div>
+        `).join('')}
+            </div>
+
+                <!-- Chart -->
+            <div class="chart-wrap">
+            <div id="chart-${ch.id}" style="width:340px;height:340px;"></div>
+            </div>
+
+                <!-- Custom labels toggle -->
+            <label class="local-labels-toggle no-export" onclick="App.toggleLocalAxes(${ch.id})">
+            <div class="toggle-switch${hasLocal ? ' on' : ''}" id="toggle-sw-${ch.id}"></div>
+            <span id="toggle-label-${ch.id}">${hasLocal ? 'Свои названия осей активны' : 'Использовать глобальные названия осей'}</span>
+            </label>
+
+                <!-- Stats editor -->
+            <div class="stats-editor" id="stats-${ch.id}">
+            ${statRows(ch)}
+            </div>
+
+                <!-- Notes -->
+            <textarea class="notes-textarea" placeholder="Заметки о персонаже…"
+            onchange="App.updateNotes(${ch.id}, this.value)">${UI.esc(ch.notes || '')}</textarea>
+            `;
+
+    Charts.draw(ch);
+    // Populate emoji dropdown
+    UI.buildEmojiDropdown(ch.id);
+  }
+
+  function statRows(ch) {
+    const { min, max } = UI.minmax();
+    const hasLocal = !!ch.localAxes;
+    return state.axes.map((globalLabel, i) => {
+      const displayLabel = hasLocal ? (ch.localAxes[i] ?? globalLabel) : globalLabel;
+      const val = ch.stats[i] ?? 0;
+      const cls = hasLocal ? 'custom-label' : 'global-label';
+      return `
+            <div class="stat-row">
+            <input class="stat-label-input ${cls}" type="text"
+            value="${UI.esc(displayLabel)}"
+            placeholder="${UI.esc(globalLabel)}"
+            ${hasLocal ? '' : 'readonly'}
+            onchange="App.updateLocalAxis(${ch.id}, ${i}, this.value)">
+            <input class="stat-num-input" type="number" min="${min}" max="${max}" value="${val}"
+            oninput="App.updateStat(${ch.id}, ${i}, +this.value)">
+            <input class="stat-slider" type="range" min="${min}" max="${max}" value="${val}"
+            oninput="App.updateStat(${ch.id}, ${i}, +this.value)">
+            </div>`;
+            }).join('');
     }
 
-    // ══════════════════════════════════════
-    //  ОСИ (РЕДАКТОР МЕТОК)
-    // ══════════════════════════════════════
-    function renderLabelsEditor() {
-        const grid = document.getElementById('labels-grid');
-        grid.innerHTML = '';
-
-        state.axes.forEach((label, i) => {
-            const item = document.createElement('div');
-            item.className = 'label-item';
-            item.innerHTML = `
-      <input class="label-input" type="text" value="${escHtml(label)}"
-        placeholder="Ось ${i+1}"
-        onchange="updateAxis(${i}, this.value)">
-      ${state.axes.length > MIN_AXES
-                ? `<button class="label-remove-btn" onclick="removeAxis(${i})" title="Удалить ось">−</button>`
-                : ''}
-    `;
-            grid.appendChild(item);
-        });
-
-        const addBtn = document.createElement('button');
-        addBtn.className = 'add-axis-btn';
-        addBtn.textContent = '+ Добавить ось';
-        addBtn.disabled = state.axes.length >= MAX_AXES;
-        addBtn.onclick = addAxis;
-        grid.appendChild(addBtn);
+    function rebuildStatRows(ch) {
+        const el = document.getElementById(`stats-${ch.id}`);
+        if (el) el.innerHTML = statRows(ch);
     }
 
-    function addAxis() {
-        if (state.axes.length >= MAX_AXES) return;
-        const { min, max } = getMinMax();
-        const mid = Math.round((min + max) / 2);
-        state.axes.push(`Характеристика ${state.axes.length + 1}`);
-        state.characters.forEach(ch => { ch.stats.push(mid); });
-        renderLabelsEditor();
-        // Перестроить карточки
-        state.characters.forEach(ch => {
-            rebuildStatRows(ch);
-            redrawChart(ch);
-            const badge = document.getElementById(`score-badge-${ch.id}`);
-            if (badge) badge.textContent = `Σ ${scoreSum(ch.stats)} / ${max * state.axes.length}`;
-        });
-        updateCompChart();
-        saveToStorage();
+    /* ── Empty state ── */
+    function empty() {
+        const grid = document.getElementById('cards-grid');
+        if (state.characters.length > 0) return;
+        if (!grid.querySelector('.empty-state')) {
+            grid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚔️</div>
+          <h3>Команда пуста</h3>
+          <p>Добавьте игроков или мастера, чтобы начать</p>
+        </div>`;
+        }
     }
 
-    function removeAxis(idx) {
-        if (state.axes.length <= MIN_AXES) return;
-        state.axes.splice(idx, 1);
-        state.characters.forEach(ch => { ch.stats.splice(idx, 1); });
-        renderLabelsEditor();
-        const { max } = getMinMax();
-        state.characters.forEach(ch => {
-            rebuildStatRows(ch);
-            redrawChart(ch);
-            const badge = document.getElementById(`score-badge-${ch.id}`);
-            if (badge) badge.textContent = `Σ ${scoreSum(ch.stats)} / ${max * state.axes.length}`;
-        });
-        updateCompChart();
-        saveToStorage();
-    }
-
-    // ══════════════════════════════════════
-    //  ПЕРЕКЛЮЧАТЕЛИ ВИДИМОСТИ
-    // ══════════════════════════════════════
-    function updateToggles() {
-        const container = document.getElementById('char-toggles');
-        container.innerHTML = '';
+    /* ── Toggles for comparison ── */
+    function toggles() {
+        const c = document.getElementById('char-toggles');
+        c.innerHTML = '';
         state.characters.forEach(ch => {
             const chip = document.createElement('label');
             chip.className = 'toggle-chip';
             chip.innerHTML = `
-      <input type="checkbox" ${state.visibleIds.has(ch.id) ? 'checked' : ''}
-        onchange="toggleVisibility(${ch.id}, this.checked)">
-      <span style="width:10px;height:10px;border-radius:50%;background:${ch.color.border};display:inline-block;"></span>
-      ${escHtml((ch.role === 'dm' ? '🎭 ' : '🎲 ') + ch.name)}
+        <input type="checkbox" ${state.visibleIds.has(ch.id) ? 'checked' : ''}
+          onchange="App.toggleVisibility(${ch.id}, this.checked)">
+        <span class="color-pip" style="background:${ch.color.border}"></span>
+        ${UI.esc((ch.role === 'dm' ? '🎭 ' : '🎲 ') + ch.name)}
+      `;
+            c.appendChild(chip);
+        });
+    }
+
+    /* ── Team insights ── */
+    function insights() {
+        const row = document.getElementById('team-insights');
+        if (!row) return;
+        const visible = state.characters.filter(c => state.visibleIds.has(c.id));
+        if (!visible.length) { row.innerHTML = ''; return; }
+
+        const { max } = UI.minmax();
+        const maxPossible = max * state.axes.length;
+
+        const axisMaxes = state.axes.map((_, i) => Math.max(...visible.map(c => c.stats[i] ?? 0)));
+        const teamScore = UI.sum(axisMaxes);
+        const isPerfect = teamScore >= maxPossible;
+        const weakIdx = axisMaxes.indexOf(Math.min(...axisMaxes));
+        const strongIdx = axisMaxes.indexOf(Math.max(...axisMaxes));
+        const pct = Math.round(teamScore / maxPossible * 100);
+
+        row.innerHTML = `
+      <span class="insight-badge ${isPerfect ? 'great' : 'good'}">
+        ${isPerfect ? '✦ Идеальное покрытие' : `Покрытие: ${teamScore} / ${maxPossible} (${pct}%)`}
+      </span>
+      ${!isPerfect ? `<span class="insight-badge warn">⚠ Слабая ось: ${UI.esc(state.axes[weakIdx])} (${axisMaxes[weakIdx]})</span>` : ''}
+      <span class="insight-badge good">👥 ${visible.length} персонаж${visible.length > 1 ? 'а/ей' : ''}</span>
     `;
-            container.appendChild(chip);
-        });
     }
 
-    function toggleVisibility(id, visible) {
-        visible ? state.visibleIds.add(id) : state.visibleIds.delete(id);
-        updateCompChart();
-        saveToStorage();
-    }
-
-    // ══════════════════════════════════════
-    //  СИСТЕМА ОЦЕНОК
-    // ══════════════════════════════════════
-    function changeScoreSystem(newSys) {
-        if (newSys === state.scoreSystem) return;
-        const oldSys = state.scoreSystem;
-        state.scoreSystem = newSys;
-
-        state.characters.forEach(ch => {
-            ch.stats = ch.stats.map(v => {
-                if (oldSys === '0-10' && newSys === '-5-5') return v - 5;
-                if (oldSys === '-5-5' && newSys === '0-10') return v + 5;
-                return v;
-            });
-            rebuildStatRows(ch);
-            redrawChart(ch);
-            const { max } = getMinMax();
-            const badge = document.getElementById(`score-badge-${ch.id}`);
-            if (badge) badge.textContent = `Σ ${scoreSum(ch.stats)} / ${max * state.axes.length}`;
-        });
-        updateCompChart();
-        saveToStorage();
-    }
-
-    // ══════════════════════════════════════
-    //  ЭКСПОРТ  (общий хелпер)
-    // ══════════════════════════════════════
-    async function captureElement(el) {
-        return html2canvas(el, { backgroundColor: null, scale: 2, useCORS: true, logging: false });
-    }
-
-    async function exportCardById(id) {
-        const card = document.getElementById(`card-${id}`);
-        if (!card) return null;
-        // Временно скрыть кнопки действий
-        const actions = card.querySelector('.card-actions');
-        if (actions) actions.style.display = 'none';
-        const canvas = await captureElement(card);
-        if (actions) actions.style.display = '';
-        return canvas;
-    }
-
-    async function exportCharacterChart(id) {
-        const ch = state.characters.find(c => c.id === id);
-        if (!ch) return;
-        const canvas = await exportCardById(id);
-        if (!canvas) return;
-        const link = document.createElement('a');
-        link.download = `${ch.name}_profile.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        document.getElementById('export-menu').classList.remove('open');
-    }
-
-    async function exportComparison() {
-        const el = document.querySelector('.comparison-inner');
-        const toggles = document.getElementById('char-toggles');
-        toggles.style.display = 'none';
-        const canvas = await captureElement(el);
-        toggles.style.display = '';
-        const link = document.createElement('a');
-        link.download = 'team_comparison.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        document.getElementById('export-menu').classList.remove('open');
-    }
-
-    async function exportAllCharts() {
-        document.getElementById('export-menu').classList.remove('open');
-        const zip = new JSZip();
-        toast('Подготовка архива…');
-
-        for (const ch of state.characters) {
-            const canvas = await exportCardById(ch.id);
-            if (canvas) {
-                const data = canvas.toDataURL('image/png').split(',')[1];
-                zip.file(`${ch.name}_profile.png`, data, { base64: true });
-            }
+    /* ── Export menu ── */
+    function exportMenu() {
+        const c = document.getElementById('export-individual');
+        c.innerHTML = '';
+        if (!state.characters.length) {
+            c.innerHTML = '<div class="export-item" style="color:var(--text3);cursor:default;">Нет персонажей</div>';
+            return;
         }
-
-        // Сравнение
-        const el = document.querySelector('.comparison-inner');
-        const toggles = document.getElementById('char-toggles');
-        toggles.style.display = 'none';
-        const compCanvas = await captureElement(el);
-        toggles.style.display = '';
-        const compData = compCanvas.toDataURL('image/png').split(',')[1];
-        zip.file('team_comparison.png', compData, { base64: true });
-
-        const blob = await zip.generateAsync({ type: 'blob' });
-        saveAs(blob, 'rpg_profiles.zip');
-    }
-
-    function updateExportMenu() {
-        const container = document.getElementById('individual-exports');
-        container.innerHTML = '';
         state.characters.forEach(ch => {
             const item = document.createElement('div');
             item.className = 'export-item';
-            item.innerHTML = `${ch.role === 'dm' ? '🎭' : '🎲'} ${escHtml(ch.name)}`;
-            item.onclick = () => exportCharacterChart(ch.id);
-            container.appendChild(item);
+            item.textContent = `${ch.role === 'dm' ? '🎭' : '🎲'} ${ch.name}`;
+            item.onclick = () => Exporter.card(ch.id);
+            c.appendChild(item);
         });
     }
 
-    // ══════════════════════════════════════
-    //  ПОДЕЛИТЬСЯ / URL
-    // ══════════════════════════════════════
-    function saveToURL() {
-        const data = JSON.stringify({
-            characters: state.characters,
-            axes: state.axes,
-            scoreSystem: state.scoreSystem,
-            nextId: state.nextId,
-        });
-        const compressed = pako.gzip(data);
-        const b64 = btoa(String.fromCharCode(...compressed));
-        const url = `${location.origin}${location.pathname}?team=${encodeURIComponent(b64)}`;
-        navigator.clipboard.writeText(url)
-            .then(() => toast('✅ Ссылка скопирована!'))
-            .catch(() => { prompt('Скопируйте ссылку:', url); });
-    }
+    return { axes, card, cardInto, rebuildStatRows, empty, toggles, insights, exportMenu, statRows };
+    })();
 
-    function loadFromURL() {
-        const param = new URLSearchParams(location.search).get('team');
-        if (!param) return false;
-        try {
-            const bytes = new Uint8Array([...atob(decodeURIComponent(param))].map(c => c.charCodeAt(0)));
-            const json = pako.ungzip(bytes, { to: 'string' });
-            const data = JSON.parse(json);
-            state.characters = data.characters || [];
-            state.axes = data.axes || state.axes;
-            state.scoreSystem = data.scoreSystem || '0-10';
-            state.nextId = data.nextId || state.characters.length + 1;
-            state.visibleIds = new Set(state.characters.map(c => c.id));
-            return true;
-        } catch (e) {
-            console.error('URL load error:', e);
-            toast('❌ Не удалось загрузить данные из ссылки');
-            return false;
+    /* ═══════════════════════════════════════════════════════
+       EXPORTER
+    ═══════════════════════════════════════════════════════ */
+    const Exporter = (() => {
+        /**
+         * Capture an element via html2canvas, then composite it onto a canvas
+         * that recreates the body's atmospheric gradient background.
+         * This way the exported image looks identical to what you see in the browser.
+         */
+        async function _captureOnAtmosphere(el, padding = 0) {
+            const raw = await html2canvas(el, {
+                backgroundColor: null,
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                ignoreElements: e => e.classList?.contains('no-export'),
+            });
+
+            const W = raw.width  + padding * 2 * 2;
+            const H = raw.height + padding * 2 * 2;
+
+            const out = document.createElement('canvas');
+            out.width = W; out.height = H;
+            const ctx = out.getContext('2d');
+
+            // Base bg — matches --bg0
+            ctx.fillStyle = '#09090f';
+            ctx.fillRect(0, 0, W, H);
+
+            // Atmospheric glows
+            _radialGlow(ctx, W * 0.14, H * 0.09, W * 0.55, 'rgba(124,92,191,0.22)');
+            _radialGlow(ctx, W * 0.88, H * 0.88, W * 0.45, 'rgba(61,191,184,0.14)');
+            _radialGlow(ctx, W * 0.50, H * 0.50, W * 0.38, 'rgba(201,168,76,0.07)');
+
+            // Draw element
+            ctx.drawImage(raw, padding * 2, padding * 2);
+
+            // Brightness boost so export matches what you see in the browser
+            const boosted = document.createElement('canvas');
+            boosted.width = W; boosted.height = H;
+            const bctx = boosted.getContext('2d');
+            bctx.filter = 'brightness(1.45) saturate(1.2) contrast(1.06)';
+            bctx.drawImage(out, 0, 0);
+
+            return boosted;
         }
-    }
 
-    // ══════════════════════════════════════
-    //  СБРОС
-    // ══════════════════════════════════════
-    function resetAll() {
-        if (!confirm('Сбросить все данные команды?')) return;
-        Object.values(charts).forEach(c => c.destroy());
-        Object.keys(charts).forEach(k => delete charts[k]);
-        if (compChart) { compChart.destroy(); compChart = null; }
+        function _radialGlow(ctx, cx, cy, r, color) {
+            const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+            g.addColorStop(0, color);
+            g.addColorStop(1, 'transparent');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        }
 
-        state.characters = [];
-        state.axes = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
-        state.scoreSystem = '0-10';
-        state.nextId = 1;
-        state.visibleIds = new Set();
+        // Simple capture (no padding) — for comparison section which has its own bg
+        async function _capture(el) {
+            return _captureOnAtmosphere(el, 16);
+        }
 
-        document.getElementById('score-system').value = '0-10';
-        document.getElementById('cards-grid').innerHTML = '';
-        document.getElementById('comparison-chart').innerHTML = '';
-        document.getElementById('char-toggles').innerHTML = '';
-        localStorage.removeItem(STORAGE_KEY);
+        async function card(id) {
+            UI.closeExportMenu();
+            const ch = state.characters.find(c => c.id === id);
+            if (!ch) return;
+            UI.showOverlay(`Экспорт: ${ch.name}…`);
+            try {
+                const el = document.getElementById(`card-${id}`);
+                const canvas = await _captureOnAtmosphere(el, 28);
+                _download(canvas, `${ch.name}_profile.png`);
+                UI.toast(`✅ ${ch.name} экспортирован`, 'success');
+            } catch (e) {
+                console.error(e);
+                UI.toast('❌ Ошибка экспорта', 'error');
+            } finally { UI.hideOverlay(); }
+        }
 
-        renderLabelsEditor();
-        showEmptyIfNeeded();
-        updateExportMenu();
-        history.replaceState({}, '', location.pathname);
-        toast('Данные сброшены');
-    }
+        async function comparison() {
+            UI.closeExportMenu();
+            UI.showOverlay('Экспорт сравнения…');
+            try {
+                const el = document.getElementById('comparison-inner');
+                const canvas = await _capture(el);
+                _download(canvas, 'team_comparison.png');
+                UI.toast('✅ Сравнение экспортировано', 'success');
+            } catch (e) {
+                console.error(e);
+                UI.toast('❌ Ошибка экспорта', 'error');
+            } finally { UI.hideOverlay(); }
+        }
 
-    // ══════════════════════════════════════
-    //  МЕНЮ ЭКСПОРТА
-    // ══════════════════════════════════════
-    function toggleExportMenu(e) {
-        e.stopPropagation();
-        document.getElementById('export-menu').classList.toggle('open');
-    }
+        async function allZip() {
+            UI.closeExportMenu();
+            UI.showOverlay('Создание архива…');
+            const zip = new JSZip();
+            try {
+                for (let i = 0; i < state.characters.length; i++) {
+                    const ch = state.characters[i];
+                    document.getElementById('export-progress-text').textContent =
+                        `${i + 1} / ${state.characters.length}: ${ch.name}`;
+                    const el = document.getElementById(`card-${ch.id}`);
+                    if (!el) continue;
+                    const canvas = await _captureOnAtmosphere(el, 28);
+                    zip.file(`${_safe(ch.name)}_profile.png`, canvas.toDataURL('image/png').split(',')[1], { base64: true });
+                }
+                document.getElementById('export-progress-text').textContent = 'Сравнительная диаграмма…';
+                const compEl = document.getElementById('comparison-inner');
+                const compCanvas = await _capture(compEl);
+                zip.file('team_comparison.png', compCanvas.toDataURL('image/png').split(',')[1], { base64: true });
 
+                document.getElementById('export-progress-text').textContent = 'Упаковка…';
+                const blob = await zip.generateAsync({ type: 'blob' });
+                saveAs(blob, 'rpg_profiles.zip');
+                UI.toast('✅ Архив готов', 'success');
+            } catch (e) {
+                console.error(e);
+                UI.toast('❌ Ошибка создания архива', 'error');
+            } finally { UI.hideOverlay(); }
+        }
+
+        function _download(canvas, filename) {
+            const a = document.createElement('a');
+            a.download = filename;
+            a.href = canvas.toDataURL('image/png');
+            a.click();
+        }
+
+        function _safe(s) {
+            return s.replace(/[^\w\u0400-\u04ff]+/g, '_');
+        }
+
+        return { card, comparison, allZip };
+    })();
+
+    /* ═══════════════════════════════════════════════════════
+       APP — main business logic
+    ═══════════════════════════════════════════════════════ */
+    const App = (() => {
+        /* ── helpers ── */
+        function _ch(id) { return state.characters.find(c => c.id === id); }
+        function _defaultStats() {
+            return state.axes.map(() => UI.midVal());
+        }
+        function _randomStats() {
+            const { min, max } = UI.minmax();
+            return state.axes.map(() => Math.round(min + Math.random() * (max - min)));
+        }
+        function _syncScoreBadge(ch) {
+            const el = document.getElementById(`sbadge-${ch.id}`);
+            if (!el) return;
+            const { max } = UI.minmax();
+            el.textContent = `Σ ${UI.sum(ch.stats)} / ${max * state.axes.length}`;
+        }
+        function _afterChange() {
+            Charts.updateComp();
+            Render.toggles();
+            Render.insights();
+            Render.exportMenu();
+            Storage.save();
+        }
+
+        /* ── Add characters ── */
+        function addPlayer() {
+            if (state.characters.length >= MAX_CHARS) { UI.toast('Максимум персонажей достигнут'); return; }
+            const idx = state.characters.filter(c => c.role === 'player').length % PALETTE.length;
+            const ch = { id: state.nextId++, name: 'Новый игрок', role: 'player',
+                stats: _defaultStats(), localAxes: null, color: PALETTE[idx], notes: '', colorIdx: idx };
+            state.characters.push(ch);
+            state.visibleIds.add(ch.id);
+            Render.card(ch);
+            _afterChange();
+        }
+
+        function addDM() {
+            if (state.characters.length >= MAX_CHARS) { UI.toast('Максимум персонажей достигнут'); return; }
+            const ch = { id: state.nextId++, name: 'Мастер', role: 'dm',
+                stats: _defaultStats(), localAxes: null, color: PALETTE[6], notes: '', colorIdx: 6 };
+            state.characters.push(ch);
+            state.visibleIds.add(ch.id);
+            Render.card(ch);
+            _afterChange();
+        }
+
+        /* ── Duplicate — insert card right after the source ── */
+        function duplicateChar(id) {
+            if (state.characters.length >= MAX_CHARS) { UI.toast('Максимум персонажей достигнут'); return; }
+            const src = _ch(id); if (!src) return;
+            const nextIdx = (src.colorIdx + 1) % PALETTE.length;
+            const ch = {
+                ...src,
+                id: state.nextId++,
+                name: src.name + ' (копия)',
+                stats: [...src.stats],
+                localAxes: src.localAxes ? [...src.localAxes] : null,
+                color: PALETTE[nextIdx], colorIdx: nextIdx,
+            };
+            // Insert into state right after source
+            const srcIdx = state.characters.findIndex(c => c.id === id);
+            state.characters.splice(srcIdx + 1, 0, ch);
+            state.visibleIds.add(ch.id);
+
+            // Insert card DOM element right after source card
+            const srcEl = document.getElementById(`card-${id}`);
+            const newEl = document.createElement('div');
+            newEl.className = `card ${ch.role}-card`;
+            newEl.id = `card-${ch.id}`;
+            srcEl?.after(newEl);
+            // Render into the pre-placed element
+            Render.cardInto(ch, newEl);
+
+            _afterChange();
+            UI.toast(`⧉ Скопирован: ${ch.name}`);
+        }
+
+        /* ── Delete — two-tap with shake animation, no browser confirm() ── */
+        const _deleteTimers = {};
+        function deleteChar(id) {
+            const btn = document.getElementById(`del-btn-${id}`);
+            const card = document.getElementById(`card-${id}`);
+
+            if (_deleteTimers[id]) {
+                // Second tap → confirm delete
+                clearTimeout(_deleteTimers[id]);
+                delete _deleteTimers[id];
+                if (card) {
+                    card.classList.remove('deleting');
+                    card.classList.add('card-exit');
+                    card.addEventListener('animationend', () => _doDelete(id), { once: true });
+                } else {
+                    _doDelete(id);
+                }
+            } else {
+                // First tap → arm (shake + red btn)
+                card?.classList.add('deleting');
+                btn?.classList.add('confirming');
+                btn && (btn.textContent = '?');
+                _deleteTimers[id] = setTimeout(() => {
+                    // Timeout — disarm
+                    delete _deleteTimers[id];
+                    card?.classList.remove('deleting');
+                    if (btn) { btn.classList.remove('confirming'); btn.textContent = '✕'; }
+                }, 2000);
+            }
+        }
+
+        function _doDelete(id) {
+            delete _deleteTimers[id];
+            state.characters = state.characters.filter(c => c.id !== id);
+            state.visibleIds.delete(id);
+            Charts.destroy(id);
+            document.getElementById(`card-${id}`)?.remove();
+            Render.empty();
+            _afterChange();
+        }
+
+        /* ── Name ── */
+        function updateName(id, val) {
+            const ch = _ch(id); if (!ch) return;
+            ch.name = val.trim() || 'Без имени';
+            Charts.update(ch);
+            _afterChange();
+        }
+
+        /* ── Color ── */
+        function updateColor(id, idx) {
+            const ch = _ch(id); if (!ch) return;
+            ch.color = PALETTE[idx]; ch.colorIdx = idx;
+            const wrap = document.getElementById(`card-${id}`);
+            wrap?.querySelectorAll('.color-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+            Charts.update(ch);
+            Storage.save();
+            Charts.updateComp();
+            Render.toggles();
+            Render.insights();
+        }
+
+        /* ── Stat value ── */
+        function updateStat(id, idx, rawVal) {
+            const { min, max } = UI.minmax();
+            const val = UI.clamp(rawVal, min, max);
+            const ch = _ch(id); if (!ch) return;
+            ch.stats[idx] = val;
+
+            // Sync inputs in the row
+            const editor = document.getElementById(`stats-${id}`);
+            if (editor) {
+                const row = editor.querySelectorAll('.stat-row')[idx];
+                if (row) {
+                    row.querySelector('.stat-num-input').value = val;
+                    row.querySelector('.stat-slider').value = val;
+                }
+            }
+            _syncScoreBadge(ch);
+            Charts.update(ch);
+            Charts.updateComp();
+            Render.insights();
+            Storage.save();
+        }
+
+        /* ── Randomize ── */
+        function randomize(id) {
+            const ch = _ch(id); if (!ch) return;
+            ch.stats = _randomStats();
+            Render.rebuildStatRows(ch);
+            Charts.update(ch);
+            _syncScoreBadge(ch);
+            Charts.updateComp();
+            Render.insights();
+            Storage.save();
+        }
+
+        /* ── Global axis ── */
+        function updateGlobalAxis(idx, val) {
+            state.axes[idx] = val.trim() || `Ось ${idx + 1}`;
+            // Update charts where localAxes is null
+            state.characters.forEach(ch => {
+                if (!ch.localAxes) Charts.updateAxes(ch.id);
+                else {
+                    // Keep localAxes length synced with state.axes length (already same)
+                }
+            });
+            // Sync stat-row label inputs for cards with global labels
+            state.characters.forEach(ch => {
+                if (ch.localAxes) return;
+                const editor = document.getElementById(`stats-${ch.id}`);
+                if (!editor) return;
+                const rows = editor.querySelectorAll('.stat-row');
+                if (rows[idx]) rows[idx].querySelector('.stat-label-input').value = state.axes[idx];
+            });
+            if (document.getElementById('comparison-chart')?.querySelector('canvas')) Charts.updateComp();
+            Render.axes();
+            Storage.save();
+        }
+
+        /* ── Add/remove axis ── */
+        function addAxis() {
+            if (state.axes.length >= MAX_AXES) return;
+            const mid = UI.midVal();
+            state.axes.push(`Характеристика ${state.axes.length + 1}`);
+            state.characters.forEach(ch => {
+                ch.stats.push(mid);
+                if (ch.localAxes) ch.localAxes.push(`Характеристика ${ch.localAxes.length + 1}`);
+            });
+            _rebuildAllCards();
+            _afterChange();
+        }
+
+        function removeAxis(idx) {
+            if (state.axes.length <= MIN_AXES) return;
+            state.axes.splice(idx, 1);
+            state.characters.forEach(ch => {
+                ch.stats.splice(idx, 1);
+                if (ch.localAxes) ch.localAxes.splice(idx, 1);
+            });
+            _rebuildAllCards();
+            _afterChange();
+        }
+
+        function _rebuildAllCards() {
+            const { max } = UI.minmax();
+            state.characters.forEach(ch => {
+                Render.rebuildStatRows(ch);
+                Charts.draw(ch);
+                _syncScoreBadge(ch);
+            });
+            Render.axes();
+        }
+
+        /* ── Per-card local axis labels ── */
+        function toggleLocalAxes(id) {
+            const ch = _ch(id); if (!ch) return;
+            if (ch.localAxes) {
+                // Disable local → revert to global
+                ch.localAxes = null;
+            } else {
+                // Enable local → copy current global as starting point
+                ch.localAxes = [...state.axes];
+            }
+            const sw = document.getElementById(`toggle-sw-${id}`);
+            const lbl = document.getElementById(`toggle-label-${id}`);
+            if (sw) sw.classList.toggle('on', !!ch.localAxes);
+            if (lbl) lbl.textContent = ch.localAxes
+                ? 'Свои названия осей активны'
+                : 'Использовать глобальные названия осей';
+
+            Render.rebuildStatRows(ch);
+            Charts.update(ch);
+            Storage.save();
+            UI.toast(ch.localAxes ? '✏️ Локальные названия включены' : '🔗 Глобальные названия восстановлены');
+        }
+
+        function updateLocalAxis(id, idx, val) {
+            const ch = _ch(id); if (!ch || !ch.localAxes) return;
+            ch.localAxes[idx] = val.trim() || state.axes[idx];
+            Charts.update(ch);
+            Storage.save();
+        }
+
+        /* ── Emoji ── */
+        function updateEmoji(id, emoji) {
+            const ch = _ch(id); if (!ch) return;
+            ch.emoji = emoji;
+            const btn = document.getElementById(`emoji-btn-${id}`);
+            if (btn) btn.textContent = emoji;
+            Storage.save();
+        }
+
+        /* ── Notes ── */
+        function updateNotes(id, val) {
+            const ch = _ch(id); if (!ch) return;
+            ch.notes = val;
+            Storage.save();
+        }
+
+        /* ── Visibility ── */
+        function toggleVisibility(id, visible) {
+            visible ? state.visibleIds.add(id) : state.visibleIds.delete(id);
+            Charts.updateComp();
+            Render.insights();
+            Storage.save();
+        }
+
+        /* ── Score system ── */
+        function changeScoreSystem(newSys) {
+            if (newSys === state.scoreSystem) return;
+            const old = state.scoreSystem;
+            state.scoreSystem = newSys;
+            state.characters.forEach(ch => {
+                ch.stats = ch.stats.map(v => {
+                    if (old === '0-10' && newSys === '-5-5') return v - 5;
+                    if (old === '-5-5' && newSys === '0-10') return v + 5;
+                    return v;
+                });
+                Render.rebuildStatRows(ch);
+                Charts.draw(ch);
+                _syncScoreBadge(ch);
+            });
+            Charts.updateComp();
+            Render.insights();
+            Storage.save();
+        }
+
+        /* ── Share via URL (compact + base64url, no percent-encoding) ── */
+        function share() {
+            // Compact payload: short keys, colorIdx instead of full color object
+            const payload = {
+                a: state.axes,
+                s: state.scoreSystem === '0-10' ? 0 : 1,
+                n: state.nextId,
+                v: [...state.visibleIds],
+                c: state.characters.map(ch => {
+                    const o = { i: ch.id, nm: ch.name, r: ch.role === 'dm' ? 1 : 0, st: ch.stats, ci: ch.colorIdx };
+                    if (ch.localAxes) o.la = ch.localAxes;
+                    if (ch.notes)     o.nt = ch.notes;
+                    if (ch.emoji && ch.emoji !== '🎲') o.em = ch.emoji;
+                    return o;
+                }),
+            };
+            // pako.deflate (no gzip header overhead) → base64url (no encodeURIComponent bloat)
+            const compressed = pako.deflate(JSON.stringify(payload));
+            const b64url = btoa(String.fromCharCode(...compressed))
+                .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+            const url = `${location.origin}${location.pathname}?t=${b64url}`;
+
+            navigator.clipboard.writeText(url)
+                .then(() => _showShareToast(url))
+                .catch(() => {
+                    // fallback for non-https
+                    try {
+                        const ta = document.createElement('textarea');
+                        ta.value = url; document.body.appendChild(ta);
+                        ta.select(); document.execCommand('copy'); ta.remove();
+                        _showShareToast(url);
+                    } catch { prompt('Скопируйте ссылку вручную:', url); }
+                });
+        }
+
+        function _showShareToast(url) {
+            const len = url.length;
+            UI.toast(`🔗 Ссылка скопирована! (${len} символов)`, 'success');
+        }
+
+        /* ── JSON export/import ── */
+        function exportJSON() {
+            const blob = new Blob([Storage.toJSON()], { type: 'application/json' });
+            saveAs(blob, `rpg_team_${new Date().toISOString().slice(0,10)}.json`);
+            UI.toast('📥 JSON сохранён', 'success');
+        }
+
+        function importJSON(evt) {
+            const file = evt.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    Storage.fromJSON(e.target.result);
+                    _fullRebuild();
+                    UI.toast('✅ Данные загружены', 'success');
+                    Storage.save();
+                } catch {
+                    UI.toast('❌ Неверный формат файла', 'error');
+                }
+            };
+            reader.readAsText(file);
+            evt.target.value = '';
+        }
+
+        /* ── Reset ── */
+        function resetAll() {
+            if (!confirm('Сбросить все данные?')) return;
+            Object.values(Charts).forEach(fn => typeof fn !== 'function' && fn?.destroy?.());
+            Charts.destroyComp();
+
+            state.characters = [];
+            state.axes = ['Ролеплей', 'Импровизация', 'Правила', 'Социальность', 'Тактика'];
+            state.scoreSystem = '0-10';
+            state.nextId = 1;
+            state.visibleIds = new Set();
+
+            document.getElementById('score-system').value = '0-10';
+            document.getElementById('cards-grid').innerHTML = '';
+            document.getElementById('comparison-chart').innerHTML = '';
+            localStorage.removeItem(STORAGE_KEY);
+            history.replaceState({}, '', location.pathname);
+
+            Render.axes();
+            Render.empty();
+            Render.toggles();
+            Render.insights();
+            Render.exportMenu();
+            UI.toast('🔄 Данные сброшены');
+        }
+
+        /* ── Internal full rebuild (after import/URL load) ── */
+        function _fullRebuild() {
+            // Destroy all charts
+            state.characters.forEach(ch => Charts.destroy(ch.id));
+            Charts.destroyComp();
+
+            document.getElementById('cards-grid').innerHTML = '';
+            document.getElementById('score-system').value = state.scoreSystem;
+
+            Render.axes();
+            state.characters.forEach(ch => Render.card(ch));
+            if (!state.characters.length) Render.empty();
+            Render.toggles();
+            Charts.updateComp();
+            Render.insights();
+            Render.exportMenu();
+        }
+
+        /* ── Init ── */
+        function init() {
+            let loaded = (location.search.includes('t=') || location.search.includes('team=')) && Storage.fromURL();
+            if (!loaded) loaded = Storage.load();
+            if (!loaded) {
+                state.characters = [
+                    { id:1, name:'Сергей', role:'player', stats:[8,2,6,7,6], localAxes:null, color:PALETTE[0], notes:'', colorIdx:0 },
+                    { id:2, name:'Дима',   role:'player', stats:[8,3,7,8,8], localAxes:null, color:PALETTE[1], notes:'', colorIdx:1 },
+                    { id:3, name:'Витя',   role:'player', stats:[6,7,4,7,2], localAxes:null, color:PALETTE[2], notes:'', colorIdx:2 },
+                    { id:4, name:'Денис',  role:'player', stats:[2,2,8,2,7], localAxes:null, color:PALETTE[3], notes:'', colorIdx:3 },
+                    { id:5, name:'Настя',  role:'dm',     stats:[8,8,3,9,3], localAxes:null, color:PALETTE[6], notes:'', colorIdx:6 },
+                ];
+                state.nextId = 6;
+                state.visibleIds = new Set([1,2,3,4,5]);
+            }
+            _fullRebuild();
+            Storage.save();
+        }
+
+        return {
+            addPlayer, addDM, deleteChar, duplicateChar,
+            updateName, updateColor, updateEmoji, updateStat, randomize,
+            updateGlobalAxis, addAxis, removeAxis,
+            toggleLocalAxes, updateLocalAxis,
+            updateNotes,
+            toggleVisibility,
+            changeScoreSystem,
+            share, exportJSON, importJSON,
+            resetAll, init,
+        };
+    })();
+
+    /* ═══════════════════════════════════════════════════════
+       GLOBAL EVENT LISTENERS
+    ═══════════════════════════════════════════════════════ */
     document.addEventListener('click', () => {
-        document.getElementById('export-menu').classList.remove('open');
+        UI.closeExportMenu();
+        document.querySelectorAll('.emoji-dropdown.open').forEach(d => d.classList.remove('open'));
     });
-
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') document.getElementById('export-menu').classList.remove('open');
+        if (e.key === 'Escape') UI.closeExportMenu();
     });
 
-    // ══════════════════════════════════════
-    //  ИНИЦИАЛИЗАЦИЯ
-    // ══════════════════════════════════════
-    function init() {
-        let loaded = false;
-
-        // Сначала URL, потом localStorage
-        if (location.search.includes('team=')) {
-            loaded = loadFromURL();
-        }
-        if (!loaded) {
-            loaded = loadFromStorage();
-        }
-
-        // Данные по умолчанию
-        if (!loaded) {
-            state.characters = [
-                { id:1, name:'Сергей',  role:'player', stats:[8,2,6,7,6], color: PALETTE[0] },
-                { id:2, name:'Дима',    role:'player', stats:[8,3,7,8,8], color: PALETTE[1] },
-                { id:3, name:'Витя',    role:'player', stats:[6,7,4,7,2], color: PALETTE[2] },
-                { id:4, name:'Денис',   role:'player', stats:[2,2,8,2,7], color: PALETTE[3] },
-                { id:5, name:'Настя',   role:'dm',     stats:[8,8,3,9,3], color: PALETTE[6] },
-            ];
-            state.nextId = 6;
-            state.visibleIds = new Set([1,2,3,4,5]);
-        }
-
-        document.getElementById('score-system').value = state.scoreSystem;
-
-        renderLabelsEditor();
-
-        state.characters.forEach(ch => renderCard(ch));
-
-        if (state.characters.length === 0) showEmptyIfNeeded();
-
-        updateToggles();
-        updateCompChart();
-        updateExportMenu();
-        saveToStorage();
-    }
-
-    document.addEventListener('DOMContentLoaded', init);
+    /* ═══════════════════════════════════════════════════════
+       BOOT
+    ═══════════════════════════════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', App.init);
 </script>
 </body>
 </html>
